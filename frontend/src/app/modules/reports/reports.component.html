@@ -1,0 +1,526 @@
+<div class="reports-screen">
+  <!-- Header -->
+  <div class="reports-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="reports" class="title-icon" [size]="28"></svg-icon>
+          Reports
+        </h1>
+        <p class="screen-subtitle">View sales and GST reports</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Date Range Form (Hidden for Stock Report) -->
+  <div class="date-range-section" *ngIf="activeTab !== 'stock'">
+    <div class="date-range-card">
+      <form [formGroup]="reportForm" (ngSubmit)="activeTab === 'sales' ? loadSalesReport() : loadGstReport()" class="date-form">
+        <div class="form-group">
+          <label class="form-label">Start Date</label>
+          <input type="date" class="form-input" formControlName="startDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Date</label>
+          <input type="date" class="form-input" formControlName="endDate">
+        </div>
+        <button 
+          type="submit" 
+          class="btn-load-report" 
+          [disabled]="reportForm.invalid || isLoading"
+        >
+          <span *ngIf="isLoading" class="spinner-mini"></span>
+          <svg-icon name="reports" class="btn-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
+          <span>Load Report</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs-container">
+    <button
+      class="tab-button"
+      [class.tab-active]="activeTab === 'sales'"
+      (click)="onTabChange('sales')"
+    >
+      Sales Report
+    </button>
+    <button
+      class="tab-button"
+      [class.tab-active]="activeTab === 'gst'"
+      (click)="onTabChange('gst')"
+    >
+      GST Report
+    </button>
+    <button
+      class="tab-button"
+      [class.tab-active]="activeTab === 'stock'"
+      (click)="onTabChange('stock')"
+    >
+      Stock Report
+    </button>
+  </div>
+
+  <!-- Sales Report -->
+  <div class="report-section" *ngIf="activeTab === 'sales'">
+    <div class="section-header">
+      <div class="section-header-content">
+        <svg-icon name="reports" class="section-icon" [size]="24"></svg-icon>
+        <div>
+          <h2 class="section-title">Daily Sales Report</h2>
+          <p class="section-subtitle">Sales summary and daily breakdown</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading && !salesReport" class="empty-state">
+      <div class="spinner"></div>
+      <p class="empty-state-text">Loading sales report...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!salesReport && !isLoading" class="empty-state">
+      <svg-icon name="reports" class="empty-icon" [size]="64"></svg-icon>
+      <h3 class="empty-title">No sales data</h3>
+      <p class="empty-message">No sales data available for the selected date range</p>
+    </div>
+
+    <!-- Sales Report Content -->
+    <div *ngIf="salesReport" class="report-content">
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="card-icon">
+            <svg-icon name="billing" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total Bills</span>
+            <span class="card-value">{{ salesReport.totalBills }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-success">
+            <svg-icon name="cash" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total Sales</span>
+            <span class="card-value">₹{{ salesReport.totalSales | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-warning">
+            <svg-icon name="reports" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total GST</span>
+            <span class="card-value">₹{{ salesReport.totalGst | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-primary">
+            <svg-icon name="cash" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Cash</span>
+            <span class="card-value">₹{{ salesReport.totalCash | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Breakdown -->
+      <div class="breakdown-section">
+        <h3 class="breakdown-title">Daily Breakdown</h3>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Bills</th>
+                <th>Total Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let daily of salesReport.dailySales; trackBy: trackByDate">
+                <td class="cell-date">
+                  <span class="date-value">{{ daily.date | date:'shortDate' }}</span>
+                </td>
+                <td class="cell-bills">
+                  <span class="bills-value">{{ daily.billCount }}</span>
+                </td>
+                <td class="cell-amount">
+                  <span class="amount-value">₹{{ daily.totalAmount | number:'1.2-2' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GST Report -->
+  <div class="report-section" *ngIf="activeTab === 'gst'">
+    <div class="section-header">
+      <div class="section-header-content">
+        <svg-icon name="reports" class="section-icon" [size]="24"></svg-icon>
+        <div>
+          <h2 class="section-title">GST Report</h2>
+          <p class="section-subtitle">GST summary and HSN-wise breakdown</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading && !gstReport" class="empty-state">
+      <div class="spinner"></div>
+      <p class="empty-state-text">Loading GST report...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!gstReport && !isLoading" class="empty-state">
+      <svg-icon name="reports" class="empty-icon" [size]="64"></svg-icon>
+      <h3 class="empty-title">No GST data</h3>
+      <p class="empty-message">No GST data available for the selected date range</p>
+    </div>
+
+    <!-- GST Report Content -->
+    <div *ngIf="gstReport" class="report-content">
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="card-icon card-icon-primary">
+            <svg-icon name="reports" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total CGST</span>
+            <span class="card-value">₹{{ gstReport.totalCgst | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-primary">
+            <svg-icon name="reports" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total SGST</span>
+            <span class="card-value">₹{{ gstReport.totalSgst | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-warning">
+            <svg-icon name="reports" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total GST</span>
+            <span class="card-value">₹{{ gstReport.totalGst | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- HSN Breakdown -->
+      <div class="breakdown-section">
+        <h3 class="breakdown-title">HSN-wise Breakdown</h3>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>HSN Code</th>
+                <th>Medicine</th>
+                <th>GST %</th>
+                <th>Taxable Amount</th>
+                <th>CGST</th>
+                <th>SGST</th>
+                <th>Total GST</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of gstReport.gstBreakup; trackBy: trackByHsn">
+                <td class="cell-hsn">
+                  <span class="hsn-code">{{ item.hsnCode }}</span>
+                </td>
+                <td class="cell-medicine">
+                  <span class="medicine-name">{{ item.medicineName }}</span>
+                </td>
+                <td class="cell-gst">
+                  <span class="gst-value">{{ item.gstPercentage }}%</span>
+                </td>
+                <td class="cell-amount">
+                  <span class="amount-value">₹{{ item.taxableAmount | number:'1.2-2' }}</span>
+                </td>
+                <td class="cell-cgst">
+                  <span class="cgst-value">₹{{ item.cgst | number:'1.2-2' }}</span>
+                </td>
+                <td class="cell-sgst">
+                  <span class="sgst-value">₹{{ item.sgst | number:'1.2-2' }}</span>
+                </td>
+                <td class="cell-total-gst">
+                  <span class="total-gst-value">₹{{ item.totalGst | number:'1.2-2' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stock Report -->
+  <div class="report-section" *ngIf="activeTab === 'stock'">
+    <div class="section-header">
+      <div class="section-header-content">
+        <svg-icon name="inventory" class="section-icon" [size]="24"></svg-icon>
+        <div>
+          <h2 class="section-title">Stock Report</h2>
+          <p class="section-subtitle">Comprehensive inventory and stock analysis</p>
+        </div>
+      </div>
+      <button 
+        class="btn-refresh" 
+        (click)="loadStockReport()"
+        [disabled]="isLoading"
+        aria-label="Refresh stock report"
+      >
+        <svg-icon name="refresh" class="refresh-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
+        <span class="spinner-mini" *ngIf="isLoading"></span>
+        <span>Refresh</span>
+      </button>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="isLoading && !stockReport" class="empty-state">
+      <div class="spinner"></div>
+      <p class="empty-state-text">Loading stock report...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!stockReport && !isLoading" class="empty-state">
+      <svg-icon name="inventory" class="empty-icon" [size]="64"></svg-icon>
+      <h3 class="empty-title">No stock data</h3>
+      <p class="empty-message">Click "Refresh" to load stock report</p>
+    </div>
+
+    <!-- Stock Report Content -->
+    <div *ngIf="stockReport" class="report-content">
+      <!-- Summary Cards -->
+      <div class="summary-cards">
+        <div class="summary-card">
+          <div class="card-icon">
+            <svg-icon name="medicines" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total Medicines</span>
+            <span class="card-value">{{ stockReport.totalMedicines }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-primary">
+            <svg-icon name="inventory" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total Stock</span>
+            <span class="card-value">{{ stockReport.totalStockQuantity | number }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-success">
+            <svg-icon name="success" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Available Stock</span>
+            <span class="card-value">{{ stockReport.availableStockQuantity | number }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-warning">
+            <svg-icon name="warning" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Low Stock</span>
+            <span class="card-value">{{ stockReport.lowStockMedicines }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-error">
+            <svg-icon name="error" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Out of Stock</span>
+            <span class="card-value">{{ stockReport.outOfStockMedicines }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-danger">
+            <svg-icon name="error" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Expired Stock</span>
+            <span class="card-value">{{ stockReport.expiredStockQuantity | number }}</span>
+          </div>
+        </div>
+
+        <div class="summary-card">
+          <div class="card-icon card-icon-primary">
+            <svg-icon name="cash" class="icon" [size]="32"></svg-icon>
+          </div>
+          <div class="card-content">
+            <span class="card-label">Total Stock Value</span>
+            <span class="card-value">₹{{ stockReport.totalStockValue | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Low Stock Items -->
+      <div class="breakdown-section" *ngIf="stockReport.lowStockItems.length > 0">
+        <h3 class="breakdown-title">Low Stock Medicines</h3>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Medicine</th>
+                <th>Manufacturer</th>
+                <th>Available Stock</th>
+                <th>Threshold</th>
+                <th>Avg. Selling Price</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of stockReport.lowStockItems; trackBy: trackByMedicineId">
+                <td class="cell-medicine">
+                  <span class="medicine-name">{{ item.medicineName }}</span>
+                </td>
+                <td class="cell-manufacturer">
+                  <span class="manufacturer-name">{{ item.manufacturer }}</span>
+                </td>
+                <td class="cell-stock cell-stock-low">
+                  <span class="stock-value">{{ item.availableStock }}</span>
+                </td>
+                <td class="cell-threshold">
+                  <span class="threshold-value">{{ item.lowStockThreshold }}</span>
+                </td>
+                <td class="cell-price">
+                  <span class="price-value">₹{{ item.averageSellingPrice | number:'1.2-2' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Expired Stock -->
+      <div class="breakdown-section" *ngIf="stockReport.expiredStock.length > 0">
+        <h3 class="breakdown-title">Expired Stock</h3>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Medicine</th>
+                <th>Batch Number</th>
+                <th>Expiry Date</th>
+                <th>Quantity</th>
+                <th>Purchase Price</th>
+                <th>Stock Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of stockReport.expiredStock; trackBy: trackByBatchId">
+                <td class="cell-medicine">
+                  <span class="medicine-name">{{ item.medicineName }}</span>
+                </td>
+                <td class="cell-batch">
+                  <span class="batch-number">{{ item.batchNumber }}</span>
+                </td>
+                <td class="cell-date cell-date-expired">
+                  <span class="date-value">{{ item.expiryDate | date:'shortDate' }}</span>
+                </td>
+                <td class="cell-quantity">
+                  <span class="quantity-value">{{ item.quantity }}</span>
+                </td>
+                <td class="cell-price">
+                  <span class="price-value">₹{{ item.purchasePrice | number:'1.2-2' }}</span>
+                </td>
+                <td class="cell-value">
+                  <span class="value-amount">₹{{ item.stockValue | number:'1.2-2' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Medicine Stock Details -->
+      <div class="breakdown-section">
+        <h3 class="breakdown-title">Medicine Stock Details</h3>
+        <div class="data-table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Medicine</th>
+                <th>Manufacturer</th>
+                <th>Category</th>
+                <th>HSN Code</th>
+                <th>Total Stock</th>
+                <th>Available</th>
+                <th>Expired</th>
+                <th>Status</th>
+                <th>Stock Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let item of stockReport.medicineStock; trackBy: trackByMedicineId"
+                  [class.row-low-stock]="item.lowStock && !item.outOfStock"
+                  [class.row-out-of-stock]="item.outOfStock">
+                <td class="cell-medicine">
+                  <span class="medicine-name">{{ item.medicineName }}</span>
+                </td>
+                <td class="cell-manufacturer">
+                  <span class="manufacturer-name">{{ item.manufacturer }}</span>
+                </td>
+                <td class="cell-category">
+                  <span class="category-value">{{ item.category || '-' }}</span>
+                </td>
+                <td class="cell-hsn">
+                  <span class="hsn-code">{{ item.hsnCode }}</span>
+                </td>
+                <td class="cell-stock">
+                  <span class="stock-value">{{ item.totalStock }}</span>
+                </td>
+                <td class="cell-stock" 
+                    [class.cell-stock-available]="item.availableStock > 0 && !item.lowStock"
+                    [class.cell-stock-low]="item.lowStock"
+                    [class.cell-stock-out]="item.outOfStock">
+                  <span class="stock-value">{{ item.availableStock }}</span>
+                </td>
+                <td class="cell-stock cell-stock-expired">
+                  <span class="stock-value">{{ item.expiredStock }}</span>
+                </td>
+                <td class="cell-status">
+                  <span 
+                    class="badge" 
+                    [class.badge-success]="!item.lowStock && !item.outOfStock"
+                    [class.badge-warning]="item.lowStock && !item.outOfStock"
+                    [class.badge-error]="item.outOfStock">
+                    {{ item.outOfStock ? 'Out of Stock' : (item.lowStock ? 'Low Stock' : 'In Stock') }}
+                  </span>
+                </td>
+                <td class="cell-value">
+                  <span class="value-amount">₹{{ item.stockValue | number:'1.2-2' }}</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,734 @@
+/* ============================================
+   INVENTORY MANAGEMENT - LIQUID GLASS DESIGN
+   Apple-style Glassmorphism with Physics
+   ============================================ */
+
+@import '../../../styles/design-tokens';
+@import '../../../styles/glass-tokens';
+@import '../../../styles/animations';
+
+.inventory-screen {
+  min-height: 100vh;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  padding: $space-6 $space-6;
+  gap: $space-6;
+  width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden; /* Prevent horizontal overflow */
+}
+
+/* Header */
+.inventory-header {
+  background: transparent !important;
+  border-radius: $radius-2xl;
+  padding: $space-6 $space-8;
+  position: relative;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  
+  /* Completely transparent - no glass effect */
+  /* Content inside remains visible */
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $space-4;
+}
+
+.header-title {
+  flex: 1;
+
+  .screen-title {
+    font-size: 1.75rem;
+    font-weight: $font-weight-bold;
+    color: var(--color-text-primary);
+    margin: 0 0 $space-1 0;
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+
+    .title-icon {
+      color: var(--color-text-primary);
+      flex-shrink: 0;
+    }
+  }
+
+  .screen-subtitle {
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+}
+
+.btn-refresh {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-3 $space-5;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-dark 100%);
+  color: white;
+  border: none;
+  border-radius: $radius-2xl;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 
+    0 4px 12px rgba(59, 130, 246, 0.3),
+    0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, $color-primary-dark 0%, darken($color-primary-dark, 5%) 100%);
+    box-shadow: 
+      0 6px 16px rgba(59, 130, 246, 0.4),
+      0 4px 8px rgba(0, 0, 0, 0.15);
+    transform: translateY(-2px) rotate(180deg);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(-1px) rotate(180deg) scale(0.98);
+    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .refresh-icon {
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .spinner-mini {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+  }
+}
+
+/* Inventory Sections */
+.inventory-content {
+  display: flex;
+  flex-direction: column;
+  gap: $space-6;
+}
+
+.inventory-section {
+  border-radius: $radius-2xl;
+  overflow: hidden;
+  position: relative;
+  
+  /* Glass Elevated Material */
+  @include glass-elevated;
+  @include glass-fallback;
+  @include animate-fade-in();
+  @include glass-interactive;
+}
+
+/* Section Headers */
+.section-header {
+  padding: $space-6 $space-8;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--glass-elevated-border);
+  background: rgba(59, 130, 246, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 1;
+
+  &.section-header-danger {
+    background: rgba(239, 68, 68, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-text-primary);
+  }
+
+  &.section-header-warning {
+    background: rgba(245, 158, 11, 0.08);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--color-text-primary);
+  }
+  
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--color-bg-tertiary);
+  }
+}
+
+.section-header-content {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  flex: 1;
+
+  .section-icon {
+    color: var(--color-text-primary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: $font-weight-bold;
+    margin: 0 0 $space-1 0;
+    color: var(--color-text-primary);
+  }
+
+  .section-subtitle {
+    font-size: $font-size-sm;
+    margin: 0;
+    opacity: 0.8;
+    color: var(--color-text-secondary);
+  }
+}
+
+.section-count {
+  background: rgba(59, 130, 246, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: $color-primary-dark;
+  padding: $space-2 $space-4;
+  border-radius: $radius-full;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  min-width: 36px;
+  text-align: center;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+  transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--color-base-200);
+    color: var(--color-text-primary);
+  }
+}
+
+/* Section Body */
+.section-body {
+  padding: $space-6;
+  background: transparent;
+  position: relative;
+  z-index: 0;
+}
+
+/* Empty States */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $space-12 $space-6;
+  text-align: center;
+  position: relative;
+  
+  /* Glass Base Material for empty state */
+  @include glass-base;
+  @include glass-fallback;
+  border-radius: $radius-xl;
+  margin: $space-4;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid $color-base-200;
+    border-top-color: $color-primary;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin-bottom: $space-4;
+  }
+
+  .empty-icon {
+    width: 64px;
+    height: 64px;
+    opacity: 0.3;
+    color: var(--color-text-tertiary);
+    margin-bottom: $space-4;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--color-text-primary);
+    margin: 0 0 $space-2 0;
+  }
+
+  .empty-message {
+    font-size: $font-size-base;
+    color: var(--color-text-secondary);
+    margin: 0;
+  }
+
+  .empty-state-text {
+    font-size: $font-size-base;
+    color: var(--color-text-secondary);
+    margin-top: $space-3;
+  }
+}
+
+/* Data Tables */
+.data-table-container {
+  overflow-x: auto;
+  border-radius: $radius-2xl;
+  position: relative;
+  overflow: hidden;
+  
+  /* Glass Base Material */
+  @include glass-base;
+  @include glass-fallback;
+}
+
+  .data-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: transparent;
+
+  thead {
+    background: rgba(59, 130, 246, 0.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+
+    th {
+      padding: $space-4 $space-5;
+      text-align: left;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-semibold;
+      color: var(--color-text-secondary);
+      text-transform: none;
+      border-bottom: 2px solid var(--glass-elevated-border);
+      white-space: nowrap;
+      
+      @supports not (backdrop-filter: blur(1px)) {
+        background: var(--color-base-50);
+      }
+
+      &:first-child {
+        border-top-left-radius: $radius-lg;
+      }
+
+      &:last-child {
+        border-top-right-radius: $radius-lg;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+      border-bottom: 1px solid var(--glass-elevated-border);
+      animation: fadeIn 300ms cubic-bezier(0.4, 0, 0.2, 1);
+      animation-fill-mode: both;
+      background: transparent;
+      position: relative;
+
+      &:nth-child(1) { animation-delay: 0ms; }
+      &:nth-child(2) { animation-delay: 30ms; }
+      &:nth-child(3) { animation-delay: 60ms; }
+      &:nth-child(4) { animation-delay: 90ms; }
+      &:nth-child(5) { animation-delay: 120ms; }
+      &:nth-child(6) { animation-delay: 150ms; }
+      &:nth-child(7) { animation-delay: 180ms; }
+      &:nth-child(8) { animation-delay: 210ms; }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      &:hover {
+        background: rgba(59, 130, 246, 0.08);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        transform: translateX(3px);
+        box-shadow: var(--glass-base-shadow);
+        
+        @supports not (backdrop-filter: blur(1px)) {
+          background: var(--color-base-50);
+        }
+      }
+    }
+
+    td {
+      padding: $space-4 $space-5;
+      font-size: $font-size-base;
+      color: var(--color-text-primary);
+      vertical-align: middle;
+    }
+  }
+}
+
+/* Table Cell Styles */
+.cell-medicine {
+  .medicine-info {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+
+    .medicine-name {
+      font-weight: $font-weight-medium;
+      color: var(--color-text-primary);
+    }
+  }
+}
+
+.cell-batch {
+  .batch-number {
+    font-family: 'Courier New', monospace;
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+    background: var(--color-base-100);
+    padding: $space-1 $space-2;
+    border-radius: $radius-md;
+  }
+}
+
+.cell-expiry {
+  .expiry-date {
+    font-size: $font-size-base;
+    color: var(--color-text-primary);
+
+    &.expired {
+      color: $color-danger;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}
+
+.cell-quantity {
+  .quantity-value {
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
+    color: var(--color-text-primary);
+
+    &.low-stock {
+      color: $color-warning;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}
+
+.cell-price {
+  .price-value {
+    font-size: $font-size-base;
+    font-weight: $font-weight-medium;
+    color: var(--color-text-primary);
+  }
+}
+
+.cell-actions {
+  .action-buttons {
+    display: flex;
+    gap: $space-2;
+    align-items: center;
+  }
+
+  .btn-action {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: $radius-md;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    transition: all 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+
+    &:hover:not(:disabled) {
+      transform: scale(1.08);
+    }
+
+    &:active:not(:disabled) {
+      transform: scale(0.92);
+      transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+  }
+
+  .btn-edit-stock {
+    color: $color-warning;
+    background: rgba(245, 158, 11, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+
+    &:hover:not(:disabled) {
+      background: $color-warning;
+      color: white;
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+    }
+    
+    @supports not (backdrop-filter: blur(1px)) {
+      background: $color-warning-light;
+    }
+  }
+
+  .btn-edit {
+    color: $color-primary;
+    background: rgba(59, 130, 246, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(59, 130, 246, 0.2);
+
+    &:hover:not(:disabled) {
+      background: $color-primary;
+      color: white;
+      box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+    }
+    
+    @supports not (backdrop-filter: blur(1px)) {
+      background: $color-primary-light;
+    }
+  }
+
+  .btn-delete {
+    color: $color-danger;
+    background: rgba(239, 68, 68, 0.12);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+
+    &:hover:not(:disabled) {
+      background: $color-danger;
+      color: white;
+      box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+    
+    @supports not (backdrop-filter: blur(1px)) {
+      background: $color-danger-light;
+    }
+  }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: $z-modal;
+  @include animate-fade-in();
+}
+
+.modal-container {
+  border-radius: $radius-2xl;
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+  
+  /* Glass Floating Material for modals */
+  @include glass-floating;
+  @include glass-fallback;
+  @include animate-slide-up();
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $space-6 $space-8;
+  border-bottom: 1px solid var(--glass-floating-border);
+  background: rgba(59, 130, 246, 0.05);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 1;
+  
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--color-base-50);
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+    font-weight: $font-weight-bold;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+
+  .btn-close-modal {
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    padding: $space-1;
+    border-radius: $radius-md;
+    @include transition-base();
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      color: var(--color-text-primary);
+      background: var(--color-base-200);
+    }
+  }
+}
+
+.modal-body {
+  padding: $space-8;
+  overflow-y: auto;
+  flex-grow: 1;
+
+  .batch-info {
+    background: rgba(59, 130, 246, 0.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    padding: $space-4;
+    border-radius: $radius-xl;
+    margin-bottom: $space-6;
+    border: 1px solid var(--glass-elevated-border);
+    
+    @supports not (backdrop-filter: blur(1px)) {
+      background: var(--color-base-50);
+    }
+
+    p {
+      margin: $space-2 0;
+      color: var(--color-text-primary);
+    }
+  }
+
+  .form-group {
+    margin-bottom: $space-5;
+
+    .form-label {
+      display: block;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-medium;
+      color: var(--color-text-primary);
+      margin-bottom: $space-2;
+
+      .required {
+        color: $color-danger;
+      }
+    }
+
+    .form-input {
+      width: 100%;
+      padding: $space-3 $space-4;
+      border: 1px solid var(--glass-elevated-border);
+      border-radius: $radius-xl;
+      font-size: $font-size-base;
+      color: var(--color-text-primary);
+      background: rgba(255, 255, 255, 0.4);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      @include transition-base();
+
+      &:focus {
+        outline: none;
+        border-color: $color-primary;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+        background: rgba(255, 255, 255, 0.6);
+      }
+      
+      @supports not (backdrop-filter: blur(1px)) {
+        background: var(--color-bg-secondary);
+      }
+    }
+
+    .form-error {
+      font-size: $font-size-xs;
+      color: $color-danger;
+      margin-top: $space-1;
+    }
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $space-5;
+    margin-bottom: $space-6;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $space-3;
+    padding-top: $space-6;
+    border-top: 1px solid $color-base-200;
+  }
+}
+
+/* Animations */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .inventory-screen {
+    padding: $space-4;
+    gap: $space-4;
+  }
+
+  .inventory-header {
+    padding: $space-4 $space-5;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .section-header {
+    padding: $space-4 $space-5;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $space-3;
+  }
+
+  .data-table-container {
+    overflow-x: scroll;
+  }
+
+  .data-table {
+    min-width: 600px;
+  }
+}

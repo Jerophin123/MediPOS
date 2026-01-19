@@ -1,0 +1,101 @@
+<div class="login-screen">
+  <div class="login-background">
+    <!-- Animated gradient orbs for depth -->
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+  </div>
+
+  <div class="login-container">
+    <div class="login-card">
+      <!-- Header -->
+      <div class="login-header">
+        <div class="logo-wrapper">
+          <svg-icon name="billing" class="logo-icon" [size]="48"></svg-icon>
+        </div>
+        <h1 class="login-title">Medical Store POS</h1>
+        <p class="login-subtitle">Sign in to continue</p>
+      </div>
+
+      <!-- Form -->
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+        <!-- Username Field -->
+        <div class="form-field">
+          <label for="username" class="form-label">Username</label>
+          <div class="input-wrapper">
+            <input
+              type="text"
+              class="form-input"
+              id="username"
+              formControlName="username"
+              [class.input-invalid]="username?.invalid && username?.touched"
+              [class.input-focus]="username?.value"
+              placeholder="Enter your username"
+              autofocus
+              autocomplete="username"
+            />
+            <div class="input-focus-line"></div>
+          </div>
+          <div class="form-error" *ngIf="username?.invalid && username?.touched">
+            Username is required
+          </div>
+        </div>
+
+        <!-- Password Field -->
+        <div class="form-field">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-wrapper password-wrapper">
+            <input
+              [type]="showPassword ? 'text' : 'password'"
+              class="form-input password-input"
+              id="password"
+              formControlName="password"
+              [class.input-invalid]="password?.invalid && password?.touched"
+              [class.input-focus]="password?.value"
+              placeholder="Enter your password"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              class="btn-toggle-password"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              tabindex="0"
+            >
+              <svg-icon 
+                [name]="showPassword ? 'eye-off' : 'eye'" 
+                class="toggle-icon" 
+                [size]="18"
+              ></svg-icon>
+              <span class="toggle-text">{{ showPassword ? 'Hide' : 'Show' }}</span>
+            </button>
+            <div class="input-focus-line"></div>
+          </div>
+          <div class="form-error" *ngIf="password?.invalid && password?.touched">
+            Password is required
+          </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-alert" *ngIf="errorMessage" role="alert">
+          <svg-icon name="error" class="error-icon" [size]="20"></svg-icon>
+          <span>{{ errorMessage }}</span>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn-signin"
+          [disabled]="loginForm.invalid || isLoading"
+        >
+          <span *ngIf="isLoading" class="spinner"></span>
+          <span *ngIf="!isLoading">{{ isLoading ? 'Signing in...' : 'Sign In' }}</span>
+        </button>
+      </form>
+
+    </div>
+  </div>
+</div>
+
+
+

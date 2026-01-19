@@ -1,0 +1,119 @@
+<div class="user-activity-screen">
+  <!-- Header -->
+  <div class="user-activity-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="user-activity" class="title-icon" [size]="28"></svg-icon>
+          User Activity Monitor
+        </h1>
+        <p class="screen-subtitle">Monitor all user activities and system events</p>
+      </div>
+      <button 
+        class="btn-refresh" 
+        (click)="loadAuditLogs()"
+        [disabled]="isLoading"
+        aria-label="Refresh activity logs"
+      >
+        <svg-icon name="refresh" class="refresh-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
+        <span class="spinner-mini" *ngIf="isLoading"></span>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="filters-content">
+        <div class="filter-group">
+          <label class="filter-label">Search</label>
+          <div class="search-input-wrapper">
+            <svg-icon name="search" class="search-icon" [size]="20"></svg-icon>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search by username, name, description..."
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="filterLogs()"
+            />
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Action</label>
+          <select class="filter-select" [(ngModel)]="selectedAction" (ngModelChange)="filterLogs()">
+            <option value="ALL">All Actions</option>
+            <option *ngFor="let action of uniqueActions" [value]="action">{{ action }}</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">User</label>
+          <select class="filter-select" [(ngModel)]="selectedUser" (ngModelChange)="filterLogs()">
+            <option value="ALL">All Users</option>
+            <option *ngFor="let user of uniqueUsers" [value]="user">{{ user }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Activity Logs Table -->
+  <div class="activity-logs-section">
+    <div class="logs-card">
+      <div class="table-container">
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>User</th>
+              <th>Role</th>
+              <th>Action</th>
+              <th>Entity</th>
+              <th>Description</th>
+              <th>IP Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoading">
+              <td colspan="7" class="loading-cell">
+                <div class="loading-spinner"></div>
+                <span>Loading activity logs...</span>
+              </td>
+            </tr>
+            <tr *ngIf="!isLoading && filteredLogs.length === 0">
+              <td colspan="7" class="empty-cell">
+                <svg-icon name="reports" class="empty-icon" [size]="48"></svg-icon>
+                <p>No activity logs found</p>
+              </td>
+            </tr>
+            <tr *ngFor="let log of filteredLogs" class="log-row">
+              <td class="timestamp-cell">{{ formatDate(log.timestamp) }}</td>
+              <td>
+                <div class="user-info">
+                  <span class="username">{{ log.username }}</span>
+                  <span class="fullname">{{ log.fullName }}</span>
+                </div>
+              </td>
+              <td><span class="role-badge">{{ log.role }}</span></td>
+              <td>
+                <span class="action-badge" [ngClass]="getActionBadgeClass(log.action)">
+                  {{ log.action }}
+                </span>
+              </td>
+              <td>{{ log.entityType }}</td>
+              <td class="description-cell">{{ log.description }}</td>
+              <td class="ip-cell">{{ log.ipAddress || 'N/A' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="table-footer">
+        <p class="log-count">Showing {{ filteredLogs.length }} of {{ auditLogs.length }} activity logs</p>
+      </div>
+    </div>
+  </div>
+</div>
+

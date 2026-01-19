@@ -1,0 +1,59 @@
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside 
+    class="sidebar"
+    [class.sidebar-expanded]="sidebarExpanded"
+    (mouseenter)="sidebarExpanded = true"
+    (mouseleave)="sidebarExpanded = false"
+  >
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+          <path d="M2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
+        <span class="logo-text" *ngIf="sidebarExpanded">Medical POS</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a
+        *ngFor="let item of visibleNavItems"
+        [routerLink]="item.route"
+        routerLinkActive="active"
+        [class.active]="isActive(item.route)"
+        class="nav-item"
+        [attr.aria-label]="item.label"
+      >
+        <svg-icon [name]="item.icon" class="nav-icon"></svg-icon>
+        <span class="nav-label" *ngIf="sidebarExpanded">{{ item.label }}</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="user-menu">
+        <div class="user-avatar">
+          <svg-icon name="user" class="avatar-icon"></svg-icon>
+        </div>
+        <div class="user-info">
+          <div class="user-name" *ngIf="authService.currentUser$ | async as user">
+            {{ user.fullName || user.username }}
+          </div>
+          <div class="user-role" *ngIf="authService.currentUser$ | async as user">
+            {{ user.role }}
+          </div>
+        </div>
+      </div>
+      <button class="btn-logout" (click)="logout()" [attr.aria-label]="'Logout'">
+        <svg-icon name="logout" class="logout-icon"></svg-icon>
+        <span class="logout-text">Logout</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+</div>
+

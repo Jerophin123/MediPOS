@@ -1,0 +1,265 @@
+/* ============================================
+   ANIMATION SYSTEM - PHYSICS-AWARE MOTIONS
+   Liquid Glass Motion Principles
+   ============================================ */
+
+@import './design-tokens';
+
+/* ============================================
+   PHYSICS-AWARE EASING CURVES
+   ============================================ */
+
+/* Natural deceleration - like objects settling */
+$ease-out-natural: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+
+/* Gentle spring - subtle bounce without overshoot */
+$ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+/* Smooth acceleration - like objects rising */
+$ease-in-smooth: cubic-bezier(0.4, 0, 1, 1);
+
+/* Micro-interaction - quick, precise */
+$ease-micro: cubic-bezier(0.4, 0, 0.2, 1);
+
+/* ============================================
+   ENTRY ANIMATIONS - Items Gently Settling
+   ============================================ */
+
+/* Fade In - Pure opacity transition */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Slide Up - Items gently settling into place */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scale In - Soft scale with fade */
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Slide In From Right - For side panels */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ============================================
+   EXIT ANIMATIONS - Dissolve, Not Collapse
+   ============================================ */
+
+/* Slide Down - Gentle exit */
+@keyframes slideDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* Fade Out - Pure dissolve */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Scale Out - Gentle shrink */
+@keyframes scaleOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+/* ============================================
+   INTERACTION ANIMATIONS - Surface Reactions
+   ============================================ */
+
+/* Gentle Lift - Hover state */
+@keyframes lift {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-3px);
+  }
+}
+
+/* Compression - Active/Click state */
+@keyframes compress {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(0.97);
+  }
+}
+
+/* Pulse - Subtle attention (no harsh bounce) */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scale(1.02);
+  }
+}
+
+/* Glow - Soft highlight */
+@keyframes glow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.3);
+  }
+}
+
+/* ============================================
+   LOADING & FEEDBACK ANIMATIONS
+   ============================================ */
+
+/* Shimmer - For loading states */
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+/* Spin - For spinners */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   ANIMATION MIXINS - Physics-Aware
+   ============================================ */
+
+/* Entry Animations */
+@mixin animate-fade-in($duration: 300ms) {
+  animation: fadeIn $duration $ease-out-natural;
+}
+
+@mixin animate-slide-up($duration: 300ms) {
+  animation: slideUp $duration $ease-out-natural;
+}
+
+@mixin animate-scale-in($duration: 220ms) {
+  animation: scaleIn $duration $ease-out-natural;
+}
+
+@mixin animate-slide-in-right($duration: 300ms) {
+  animation: slideInRight $duration $ease-out-natural;
+}
+
+/* Exit Animations */
+@mixin animate-fade-out($duration: 200ms) {
+  animation: fadeOut $duration $ease-in-smooth;
+}
+
+@mixin animate-slide-down($duration: 200ms) {
+  animation: slideDown $duration $ease-in-smooth;
+}
+
+@mixin animate-scale-out($duration: 180ms) {
+  animation: scaleOut $duration $ease-in-smooth;
+}
+
+/* Interaction Animations */
+@mixin animate-lift {
+  animation: lift 220ms $ease-out-natural;
+}
+
+@mixin animate-compress {
+  animation: compress 120ms $ease-micro;
+}
+
+@mixin animate-pulse {
+  animation: pulse 2s $ease-out-natural infinite;
+}
+
+@mixin animate-glow {
+  animation: glow 2s $ease-out-natural infinite;
+}
+
+/* ============================================
+   TRANSITION MIXINS - Physics-Aware Durations
+   ============================================ */
+
+/* Base Transition - Surface interactions */
+@mixin transition-base($properties: all) {
+  transition: $properties 220ms $ease-micro;
+}
+
+/* Fast Transition - Micro-interactions */
+@mixin transition-fast($properties: all) {
+  transition: $properties 150ms $ease-micro;
+}
+
+/* Slow Transition - Major state changes */
+@mixin transition-slow($properties: all) {
+  transition: $properties 300ms $ease-out-natural;
+}
+
+/* Hover Transition - Gentle lift */
+@mixin transition-hover {
+  transition: transform 220ms $ease-out-natural, 
+              box-shadow 220ms $ease-out-natural,
+              border-color 220ms $ease-out-natural;
+}
+
+/* Active Transition - Quick compression */
+@mixin transition-active {
+  transition: transform 120ms $ease-micro,
+              box-shadow 120ms $ease-micro;
+}
+
+

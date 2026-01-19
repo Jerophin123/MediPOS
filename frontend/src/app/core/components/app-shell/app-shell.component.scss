@@ -1,0 +1,496 @@
+@import '../../../../styles/_design-tokens';
+@import '../../../../styles/_glass-tokens';
+@import '../../../../styles/_animations';
+
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-bg-primary);
+  position: relative;
+  
+  /* Subtle background texture for glass effect */
+  &::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: 
+      radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.05) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+/* Sidebar - Glass Navigation */
+.sidebar {
+  width: 72px;
+  display: flex;
+  flex-direction: column;
+  position: fixed; /* Fixed position - stays in place during scroll */
+  left: $space-4;
+  top: $space-4;
+  bottom: $space-4;
+  z-index: $z-fixed;
+  height: calc(100vh - #{$space-4 * 2});
+  max-height: calc(100vh - #{$space-4 * 2});
+  border-radius: $radius-2xl;
+  
+  /* Glass Elevated Material */
+  @include glass-elevated;
+  @include glass-fallback;
+  
+  overflow: hidden;
+  transition: width 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width; /* Optimize for animation */
+  
+  /* Ensure sidebar stays fixed during scroll - locked in position */
+  transform: translateZ(0); /* Force hardware acceleration */
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden; /* Prevent flickering during scroll */
+  -webkit-backface-visibility: hidden;
+
+  &:hover,
+  &.sidebar-expanded {
+    width: 240px;
+    /* Same z-index - stays on same layer as page */
+    box-shadow: var(--glass-elevated-shadow); /* Keep same shadow level */
+  }
+  
+  /* Subtle noise texture */
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(0, 0, 0, var(--glass-noise-opacity)) 2px,
+        rgba(0, 0, 0, var(--glass-noise-opacity)) 4px
+      );
+    pointer-events: none;
+    opacity: 0.5;
+  }
+}
+
+.sidebar-header {
+  padding: $space-6 $space-4;
+  border-bottom: 1px solid var(--glass-elevated-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  color: var(--color-text-primary);
+}
+
+.logo-icon {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  color: $color-primary;
+  display: block;
+  padding: $space-1;
+  border-radius: $radius-lg;
+  background: rgba(59, 130, 246, 0.12);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  path {
+    fill: currentColor;
+    stroke: currentColor;
+  }
+  
+  .sidebar:hover &,
+  .sidebar-expanded & {
+    background: rgba(59, 130, 246, 0.18);
+    transform: scale(1.05);
+  }
+}
+
+.logo-text {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  opacity: 0;
+  @include transition-base(opacity);
+
+  .sidebar:hover &,
+  .sidebar-expanded & {
+    opacity: 1;
+  }
+}
+
+.sidebar-nav {
+  flex: 1;
+  padding: $space-4 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  
+  /* Custom scrollbar for glass aesthetic */
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--glass-elevated-border);
+    border-radius: $radius-full;
+    
+    &:hover {
+      background: var(--glass-floating-border);
+    }
+  }
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: $space-4;
+  padding: $space-3 $space-4;
+  margin: 0 $space-2;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  border-radius: $radius-xl;
+  position: relative;
+  overflow: hidden;
+  
+  /* Physics-aware transition */
+  transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  transform: scale(1);
+
+  /* Glass hover state */
+  &:hover {
+    background: rgba(59, 130, 246, 0.08);
+    color: var(--color-text-primary);
+    transform: translateX(3px);
+    
+    /* Subtle glow on hover */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: $radius-xl;
+      background: radial-gradient(
+        circle at left center,
+        rgba(59, 130, 246, 0.1) 0%,
+        transparent 70%
+      );
+      pointer-events: none;
+    }
+  }
+
+  &.active {
+    /* Liquid Glass Active State */
+    background: rgba(59, 130, 246, 0.2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: $color-primary-dark;
+    font-weight: $font-weight-medium;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+    box-shadow: 
+      0 4px 12px rgba(59, 130, 246, 0.2),
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    
+    /* Glass highlight effect - replaces the line */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: $radius-xl;
+      background: radial-gradient(
+        circle at left center,
+        rgba(59, 130, 246, 0.25) 0%,
+        rgba(59, 130, 246, 0.1) 50%,
+        transparent 100%
+      );
+      pointer-events: none;
+    }
+    
+    /* Icon glow on active */
+    .nav-icon {
+      filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.5));
+      color: $color-primary;
+    }
+    
+    @supports not (backdrop-filter: blur(1px)) {
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.95;
+  }
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 1;
+
+  .nav-item:hover & {
+    transform: scale(1.08);
+  }
+  
+  /* Icon feels etched into glass */
+  svg {
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.05));
+  }
+}
+
+.nav-label {
+  font-size: $font-size-base;
+  white-space: nowrap;
+  opacity: 0;
+  @include transition-base(opacity);
+
+  .sidebar:hover &,
+  .sidebar-expanded & {
+    opacity: 1;
+  }
+}
+
+.sidebar-footer {
+  padding: $space-4;
+  border-top: 1px solid var(--glass-elevated-border);
+  display: flex;
+  flex-direction: column;
+  gap: $space-3;
+  align-items: center;
+  padding-left: $space-4;
+  padding-right: $space-3;
+  position: relative;
+  z-index: 1;
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-3;
+  width: 100%;
+  justify-content: center;
+  border-radius: $radius-xl;
+  background: transparent;
+  @include transition-base();
+  transform: translateX(2px);
+  position: relative;
+  overflow: visible;
+
+  .sidebar:hover &,
+  .sidebar-expanded & {
+    justify-content: flex-start;
+    transform: translateX(0);
+    background: rgba(59, 130, 246, 0.06);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  border-radius: $radius-full;
+  background: rgba(59, 130, 246, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: visible;
+  position: relative;
+  box-sizing: border-box;
+  
+  .user-menu:hover & {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.2);
+  }
+}
+
+.avatar-icon {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
+  color: $color-primary-dark;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: visible;
+  
+  svg,
+  ::ng-deep svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    overflow: visible;
+  }
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+  opacity: 0;
+  @include transition-base(opacity);
+
+  .sidebar:hover &,
+  .sidebar-expanded & {
+    opacity: 1;
+  }
+}
+
+.user-name {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-role {
+  font-size: $font-size-xs;
+  color: var(--color-text-secondary);
+  text-transform: capitalize;
+}
+
+.btn-logout {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $space-3;
+  padding: $space-3;
+  background: transparent;
+  border: none;
+  border-radius: $radius-xl;
+  color: var(--color-text-secondary);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  @include transition-base();
+  transform: translateX(2px);
+  position: relative;
+  overflow: hidden;
+
+  .sidebar:hover &,
+  .sidebar-expanded & {
+    justify-content: flex-start;
+    padding: $space-3 $space-4;
+    transform: translateX(0);
+    border: 1px solid var(--glass-elevated-border);
+    background: rgba(239, 68, 68, 0.06);
+  }
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: $color-danger;
+    transform: translateX(2px);
+  }
+  
+  &:active {
+    transform: translateX(0) scale(0.98);
+    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+.logout-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-text {
+  opacity: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  @include transition-base(opacity);
+
+  .sidebar:hover &,
+  .sidebar-expanded & {
+    opacity: 1;
+  }
+}
+
+.logout-text {
+  opacity: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  @include transition-base(opacity);
+
+  .sidebar:hover &,
+  .sidebar-expanded & {
+    opacity: 1;
+  }
+}
+
+/* Main Content */
+.main-content {
+  flex: 1;
+  /* Sidebar: left(16px) + width(72px) + gap(8px) = 96px */
+  margin-left: calc(#{$space-4} + 72px + #{$space-2});
+  background: transparent;
+  transition: margin-left 280ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  z-index: 0;
+  min-width: 0; /* Prevent overflow issues */
+}
+
+/* When sidebar expands, content contracts to make room */
+/* Sidebar: left(16px) + width(240px) + gap(8px) = 264px */
+.app-shell:has(.sidebar:hover) .main-content,
+.app-shell:has(.sidebar.sidebar-expanded) .main-content {
+  margin-left: calc(#{$space-4} + 240px + #{$space-2});
+}
+
+/* Fallback for browsers without :has() support - sibling selector */
+.sidebar:hover ~ .main-content,
+.sidebar.sidebar-expanded ~ .main-content {
+  margin-left: calc(#{$space-4} + 240px + #{$space-2});
+}
+

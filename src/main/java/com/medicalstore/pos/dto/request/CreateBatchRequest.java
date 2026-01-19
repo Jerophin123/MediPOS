@@ -1,0 +1,42 @@
+package com.medicalstore.pos.dto.request;
+
+import jakarta.validation.constraints.Future;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+import lombok.Data;
+
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.util.List;
+
+@Data
+public class CreateBatchRequest {
+    @NotNull(message = "Medicine ID is required")
+    private Long medicineId;
+    
+    @NotBlank(message = "Batch number is required")
+    private String batchNumber;
+    
+    @NotNull(message = "Expiry date is required")
+    @Future(message = "Expiry date must be in the future")
+    private LocalDate expiryDate;
+    
+    @NotNull(message = "Purchase price is required")
+    @Positive(message = "Purchase price must be positive")
+    private BigDecimal purchasePrice;
+    
+    @NotNull(message = "Selling price is required")
+    @Positive(message = "Selling price must be positive")
+    private BigDecimal sellingPrice;
+    
+    @NotNull(message = "Quantity is required")
+    @Min(value = 1, message = "Quantity must be at least 1")
+    private Integer quantityAvailable;
+    
+    // Optional: List of individual barcodes for each stock item
+    // If provided, must match quantityAvailable
+    private List<String> barcodes;
+}
+

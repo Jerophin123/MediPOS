@@ -1,0 +1,577 @@
+<div class="medicines-screen">
+  <!-- Header -->
+  <div class="medicines-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="medicines" class="title-icon" [size]="28"></svg-icon>
+          Medicines
+        </h1>
+        <p class="screen-subtitle">Manage your medicine catalog</p>
+      </div>
+      <button 
+        class="btn-add-medicine" 
+        (click)="openForm()"
+        aria-label="Add new medicine"
+      >
+        <svg-icon name="medicines" class="btn-icon" [size]="18"></svg-icon>
+        <span>Add Medicine</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Add Medicine Form Modal -->
+  <div class="modal-overlay" *ngIf="showForm" (click)="closeForm()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">{{ isEditMode ? 'Edit Medicine' : 'Add New Medicine' }}</h3>
+        <button class="btn-close-modal" (click)="closeForm()" aria-label="Close form">
+          <svg-icon name="error" class="close-icon" [size]="20"></svg-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="medicineForm" (ngSubmit)="onSubmit()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Medicine Name <span class="required">*</span></label>
+              <input 
+                type="text" 
+                class="form-input" 
+                formControlName="name"
+                placeholder="Enter medicine name"
+              >
+              <div class="form-error" *ngIf="medicineForm.get('name')?.invalid && medicineForm.get('name')?.touched">
+                Medicine name is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Manufacturer <span class="required">*</span></label>
+              <input 
+                type="text" 
+                class="form-input" 
+                formControlName="manufacturer"
+                placeholder="Enter manufacturer name"
+              >
+              <div class="form-error" *ngIf="medicineForm.get('manufacturer')?.invalid && medicineForm.get('manufacturer')?.touched">
+                Manufacturer is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Category</label>
+              <input 
+                type="text" 
+                class="form-input" 
+                formControlName="category"
+                placeholder="Enter category (optional)"
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Barcode (GTIN/EAN)</label>
+              <input 
+                type="text" 
+                class="form-input" 
+                formControlName="barcode"
+                placeholder="Enter product barcode (optional)"
+              >
+              <p class="form-hint">Barcode identifies the product, not individual units</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">HSN Code <span class="required">*</span></label>
+              <input 
+                type="text" 
+                class="form-input" 
+                formControlName="hsnCode"
+                placeholder="Enter HSN code"
+              >
+              <div class="form-error" *ngIf="medicineForm.get('hsnCode')?.invalid && medicineForm.get('hsnCode')?.touched">
+                HSN code is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">GST % <span class="required">*</span></label>
+              <input 
+                type="number" 
+                class="form-input" 
+                formControlName="gstPercentage" 
+                step="0.01" 
+                min="0" 
+                max="100"
+                placeholder="0.00"
+              >
+              <div class="form-error" *ngIf="medicineForm.get('gstPercentage')?.invalid && medicineForm.get('gstPercentage')?.touched">
+                Valid GST percentage is required (0-100)
+              </div>
+            </div>
+
+            <div class="form-group form-group-checkbox">
+              <label class="checkbox-label">
+                <input 
+                  type="checkbox" 
+                  class="checkbox-input" 
+                  formControlName="prescriptionRequired"
+                >
+                <span class="checkbox-text">Prescription Required</span>
+              </label>
+            </div>
+
+            <!-- Stock and Pricing Section (Optional) -->
+            <div class="form-group form-group-full-width">
+              <div class="section-divider">
+                <span class="divider-text">Initial Stock & Pricing (Optional)</span>
+              </div>
+              <p class="section-hint">Add initial stock and pricing to automatically create a batch</p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Initial Stock</label>
+              <input 
+                type="number" 
+                class="form-input" 
+                formControlName="initialStock"
+                min="0"
+                step="1"
+                placeholder="Enter initial stock quantity"
+              >
+              <div class="form-hint">Leave empty if adding stock later</div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Batch Number</label>
+              <input 
+                type="text" 
+                class="form-input" 
+                formControlName="batchNumber"
+                placeholder="Enter batch number (required if adding stock)"
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Expiry Date</label>
+              <input 
+                type="date" 
+                class="form-input" 
+                formControlName="expiryDate"
+                [min]="minDate"
+                placeholder="Select expiry date"
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Purchase Price (₹)</label>
+              <input 
+                type="number" 
+                class="form-input" 
+                formControlName="purchasePrice"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+              >
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Selling Price (₹)</label>
+              <input 
+                type="number" 
+                class="form-input" 
+                formControlName="sellingPrice"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+              >
+            </div>
+
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="button" 
+              class="btn-secondary" 
+              (click)="closeForm()"
+            >
+              Cancel
+            </button>
+            <button 
+              type="submit" 
+              class="btn-primary" 
+              [disabled]="medicineForm.invalid || isLoading"
+            >
+              <span *ngIf="isLoading" class="spinner-mini"></span>
+              <span *ngIf="!isLoading">Save Medicine</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="medicines-content">
+    <!-- Loading State -->
+    <div *ngIf="isLoading && medicines.length === 0" class="empty-state">
+      <div class="spinner"></div>
+      <p class="empty-state-text">Loading medicines...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && medicines.length === 0" class="empty-state">
+      <svg-icon name="medicines" class="empty-icon" [size]="64"></svg-icon>
+      <h3 class="empty-title">No medicines found</h3>
+      <p class="empty-message">Click "Add Medicine" to create your first medicine</p>
+    </div>
+
+    <!-- Medicines Table -->
+    <div *ngIf="medicines.length > 0" class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Manufacturer</th>
+            <th>Category</th>
+            <th>Stock</th>
+            <th>HSN Code</th>
+            <th>GST %</th>
+            <th>Prescription</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let medicine of medicines; trackBy: trackByMedicineId">
+            <td class="cell-name">
+              <span class="medicine-name">{{ medicine.name }}</span>
+            </td>
+            <td class="cell-manufacturer">
+              <span class="manufacturer-name">{{ medicine.manufacturer }}</span>
+            </td>
+            <td class="cell-category">
+              <span class="category-value">{{ medicine.category || '-' }}</span>
+            </td>
+            <td class="cell-stock">
+              <div class="stock-info">
+                <div class="stock-quantity" 
+                     [class.stock-out]="medicine.outOfStock"
+                     [class.stock-low]="medicine.lowStock && !medicine.outOfStock"
+                     [class.stock-available]="!medicine.lowStock && !medicine.outOfStock">
+                  <svg-icon 
+                    [name]="medicine.outOfStock ? 'error' : (medicine.lowStock ? 'warning' : 'success')" 
+                    class="stock-icon" 
+                    [size]="16">
+                  </svg-icon>
+                  <span class="stock-value">
+                    {{ medicine.availableStock !== undefined ? medicine.availableStock : '-' }}
+                  </span>
+                  <span class="stock-unit">units</span>
+                </div>
+                <div class="stock-status" *ngIf="medicine.outOfStock || medicine.lowStock">
+                  <span 
+                    class="stock-badge" 
+                    [class.badge-error]="medicine.outOfStock"
+                    [class.badge-warning]="medicine.lowStock && !medicine.outOfStock">
+                    {{ medicine.outOfStock ? 'Out of Stock' : 'Low Stock' }}
+                  </span>
+                </div>
+                <div class="stock-total" *ngIf="medicine.totalStock !== undefined && medicine.totalStock !== medicine.availableStock">
+                  <span class="stock-total-text">Total: {{ medicine.totalStock }}</span>
+                </div>
+              </div>
+            </td>
+            <td class="cell-hsn">
+              <span class="hsn-code">{{ medicine.hsnCode }}</span>
+            </td>
+            <td class="cell-gst">
+              <span class="gst-value">{{ medicine.gstPercentage }}%</span>
+            </td>
+            <td class="cell-prescription">
+              <span 
+                class="badge badge-warning" 
+                *ngIf="medicine.prescriptionRequired"
+              >
+                Required
+              </span>
+              <span 
+                class="badge badge-success" 
+                *ngIf="!medicine.prescriptionRequired"
+              >
+                Not Required
+              </span>
+            </td>
+            <td class="cell-status">
+              <span 
+                class="badge" 
+                [class.badge-success]="medicine.status === 'ACTIVE'"
+                [class.badge-secondary]="medicine.status === 'DISCONTINUED'"
+              >
+                {{ medicine.status }}
+              </span>
+            </td>
+            <td class="cell-actions">
+              <div class="action-buttons">
+                <button 
+                  class="btn-action btn-stock" 
+                  (click)="openStockModal(medicine)"
+                  aria-label="Manage stock"
+                  title="Manage Stock"
+                >
+                  <svg-icon name="inventory" [size]="16"></svg-icon>
+                </button>
+                <button 
+                  class="btn-action btn-edit" 
+                  (click)="openForm(medicine)"
+                  aria-label="Edit medicine"
+                  title="Edit"
+                >
+                  <svg-icon name="medicines" [size]="16"></svg-icon>
+                </button>
+                <button 
+                  class="btn-action btn-delete" 
+                  (click)="deleteMedicine(medicine)"
+                  aria-label="Delete medicine"
+                  title="Delete"
+                  [disabled]="isLoading"
+                >
+                  <svg-icon name="error" [size]="16"></svg-icon>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Stock Management Modal -->
+  <div class="modal-overlay" *ngIf="showStockModal" (click)="closeStockModal()">
+    <div class="modal-container modal-large" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Manage Stock - {{ managingMedicine?.name }}</h3>
+        <button class="btn-close-modal" (click)="closeStockModal()" aria-label="Close">
+          <svg-icon name="error" class="close-icon" [size]="20"></svg-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Add New Batch Button -->
+        <div class="stock-actions-header">
+          <button 
+            class="btn-add-batch" 
+            (click)="openNewBatchModal()"
+            aria-label="Add new batch"
+          >
+            <svg-icon name="inventory" class="btn-icon" [size]="18"></svg-icon>
+            <span>Add New Batch</span>
+          </button>
+        </div>
+
+        <!-- Batches List -->
+        <div class="batches-section" *ngIf="batches.length > 0">
+          <h4 class="section-title">Existing Batches</h4>
+          <div class="batches-list">
+            <div 
+              *ngFor="let batch of batches" 
+              class="batch-card"
+              [class.batch-expired]="batch.expired"
+              [class.batch-expiring]="isExpiringSoon(batch.expiryDate)"
+              [class.batch-low-stock]="isLowStock(batch.quantityAvailable)"
+            >
+              <div class="batch-header">
+                <div class="batch-info">
+                  <h5 class="batch-number">{{ batch.batchNumber }}</h5>
+                  <p class="batch-details">
+                    Expiry: {{ batch.expiryDate | date:'mediumDate' }}
+                    <span *ngIf="batch.expired" class="badge badge-error">Expired</span>
+                    <span *ngIf="isExpiringSoon(batch.expiryDate) && !batch.expired" class="badge badge-warning">Expiring Soon</span>
+                  </p>
+                </div>
+                <div class="batch-actions">
+                  <button 
+                    class="btn-action-small btn-update-stock" 
+                    (click)="openUpdateStockModal(batch)"
+                    title="Update Stock"
+                  >
+                    <svg-icon name="inventory" [size]="14"></svg-icon>
+                    Update Stock
+                  </button>
+                  <button 
+                    class="btn-action-small btn-delete" 
+                    (click)="deleteBatch(batch)"
+                    title="Delete Batch"
+                    [disabled]="isLoading"
+                  >
+                    <svg-icon name="error" [size]="14"></svg-icon>
+                  </button>
+                </div>
+              </div>
+              <div class="batch-content">
+                <div class="batch-row">
+                  <span class="batch-label">Stock:</span>
+                  <span 
+                    class="batch-value"
+                    [class.value-warning]="isLowStock(batch.quantityAvailable)"
+                    [class.value-danger]="batch.quantityAvailable === 0"
+                  >
+                    {{ batch.quantityAvailable }} units
+                    <span *ngIf="isLowStock(batch.quantityAvailable)" class="badge badge-warning">Low Stock</span>
+                  </span>
+                </div>
+                <div class="batch-row">
+                  <span class="batch-label">Purchase Price:</span>
+                  <span class="batch-value">₹{{ batch.purchasePrice | number:'1.2-2' }}</span>
+                </div>
+                <div class="batch-row">
+                  <span class="batch-label">Selling Price:</span>
+                  <span class="batch-value">₹{{ batch.sellingPrice | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state-small" *ngIf="!isLoading && batches.length === 0">
+          <svg-icon name="inventory" class="empty-icon" [size]="48"></svg-icon>
+          <p class="empty-message">No batches found. Add a new batch to manage stock.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Update Stock Modal -->
+  <div class="modal-overlay" *ngIf="isEditingBatch && editingBatch && editingBatch.id !== 0" (click)="closeUpdateStockModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Update Stock - {{ editingBatch.batchNumber }}</h3>
+        <button class="btn-close-modal" (click)="closeUpdateStockModal()" aria-label="Close">
+          <svg-icon name="error" class="close-icon" [size]="20"></svg-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="stockForm" (ngSubmit)="updateStock()">
+          <div class="form-group">
+            <label class="form-label">Available Quantity <span class="required">*</span></label>
+            <input 
+              type="number" 
+              class="form-input" 
+              formControlName="quantityAvailable"
+              min="0"
+              step="1"
+              placeholder="Enter quantity"
+            >
+            <div class="form-error" *ngIf="stockForm.get('quantityAvailable')?.invalid && stockForm.get('quantityAvailable')?.touched">
+              Valid quantity is required (minimum 0)
+            </div>
+          </div>
+          
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeUpdateStockModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="stockForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-mini"></span>
+              <span *ngIf="!isLoading">Update Stock</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add New Batch Modal -->
+  <div class="modal-overlay" *ngIf="showStockModal && editingBatch && editingBatch.id === 0 && managingMedicine && !isEditingBatch" (click)="closeNewBatchModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3 class="modal-title">Add New Batch - {{ managingMedicine.name }}</h3>
+        <button class="btn-close-modal" (click)="closeNewBatchModal()" aria-label="Close">
+          <svg-icon name="error" class="close-icon" [size]="20"></svg-icon>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form [formGroup]="batchForm" (ngSubmit)="saveBatch()">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Batch Number <span class="required">*</span></label>
+              <input 
+                type="text" 
+                class="form-input" 
+                formControlName="batchNumber"
+                placeholder="Enter batch number"
+              >
+              <div class="form-error" *ngIf="batchForm.get('batchNumber')?.invalid && batchForm.get('batchNumber')?.touched">
+                Batch number is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Expiry Date <span class="required">*</span></label>
+              <input 
+                type="date" 
+                class="form-input" 
+                formControlName="expiryDate"
+                [min]="minDate"
+                placeholder="Select expiry date"
+              >
+              <div class="form-error" *ngIf="batchForm.get('expiryDate')?.invalid && batchForm.get('expiryDate')?.touched">
+                Expiry date is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Purchase Price (₹) <span class="required">*</span></label>
+              <input 
+                type="number" 
+                class="form-input" 
+                formControlName="purchasePrice"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+              >
+              <div class="form-error" *ngIf="batchForm.get('purchasePrice')?.invalid && batchForm.get('purchasePrice')?.touched">
+                Valid purchase price is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Selling Price (₹) <span class="required">*</span></label>
+              <input 
+                type="number" 
+                class="form-input" 
+                formControlName="sellingPrice"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+              >
+              <div class="form-error" *ngIf="batchForm.get('sellingPrice')?.invalid && batchForm.get('sellingPrice')?.touched">
+                Valid selling price is required
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Quantity <span class="required">*</span></label>
+              <input 
+                type="number" 
+                class="form-input" 
+                formControlName="quantityAvailable"
+                min="0"
+                step="1"
+                placeholder="Enter quantity"
+              >
+              <div class="form-error" *ngIf="batchForm.get('quantityAvailable')?.invalid && batchForm.get('quantityAvailable')?.touched">
+                Valid quantity is required
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn-secondary" (click)="closeNewBatchModal()">Cancel</button>
+            <button type="submit" class="btn-primary" [disabled]="batchForm.invalid || isLoading">
+              <span *ngIf="isLoading" class="spinner-mini"></span>
+              <span *ngIf="!isLoading">Save Batch</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>

@@ -1,0 +1,173 @@
+<div class="purchase-history-screen">
+  <!-- Header -->
+  <div class="purchase-history-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="purchase-history" class="title-icon" [size]="28"></svg-icon>
+          Purchase History
+        </h1>
+        <p class="screen-subtitle">View all customer purchases and bill records</p>
+      </div>
+      <button 
+        class="btn-refresh" 
+        (click)="loadPurchaseHistory()"
+        [disabled]="isLoading"
+        aria-label="Refresh purchase history"
+      >
+        <svg-icon name="refresh" class="refresh-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
+        <span class="spinner-mini" *ngIf="isLoading"></span>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Search and Summary -->
+  <div class="search-summary-section">
+    <div class="search-card">
+      <div class="search-input-wrapper">
+        <svg-icon name="search" class="search-icon" [size]="20"></svg-icon>
+        <input
+          type="text"
+          class="search-input"
+          placeholder="Search by bill number, customer name, phone, or medicine..."
+          [(ngModel)]="searchTerm"
+        />
+      </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+      <div class="summary-card">
+        <div class="card-icon">
+          <svg-icon name="billing" class="icon" [size]="32"></svg-icon>
+        </div>
+        <div class="card-content">
+          <span class="card-label">Total Bills</span>
+          <span class="card-value">{{ totalBills }}</span>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card-icon card-icon-success">
+          <svg-icon name="cash" class="icon" [size]="32"></svg-icon>
+        </div>
+        <div class="card-content">
+          <span class="card-label">Total Sales</span>
+          <span class="card-value">₹{{ totalSales | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <div class="card-icon card-icon-primary">
+          <svg-icon name="inventory" class="icon" [size]="32"></svg-icon>
+        </div>
+        <div class="card-content">
+          <span class="card-label">Total Items</span>
+          <span class="card-value">{{ totalItems }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading && bills.length === 0" class="empty-state">
+    <div class="spinner"></div>
+    <p class="empty-state-text">Loading purchase history...</p>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!isLoading && bills.length === 0" class="empty-state">
+    <svg-icon name="billing" class="empty-icon" [size]="64"></svg-icon>
+    <h3 class="empty-title">No purchase history</h3>
+    <p class="empty-message">No bills have been created yet</p>
+  </div>
+
+  <!-- Purchase History Table -->
+  <div *ngIf="!isLoading && bills.length > 0" class="purchase-history-content">
+    <div class="data-table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Bill Number</th>
+            <th>Date & Time</th>
+            <th>Customer</th>
+            <th>Phone</th>
+            <th>Items</th>
+            <th>Subtotal</th>
+            <th>GST</th>
+            <th>Total Amount</th>
+            <th>Payment Status</th>
+            <th>Cashier</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let bill of filteredBills; trackBy: trackByBillId"
+              [class.row-cancelled]="bill.cancelled">
+            <td class="cell-bill-number">
+              <span class="bill-number">{{ bill.billNumber }}</span>
+            </td>
+            <td class="cell-date">
+              <span class="date-value">{{ formatDateTime(bill.billDate) }}</span>
+            </td>
+            <td class="cell-customer">
+              <span class="customer-name">{{ bill.customerName || '-' }}</span>
+            </td>
+            <td class="cell-phone">
+              <span class="phone-value">{{ bill.customerPhone || '-' }}</span>
+            </td>
+            <td class="cell-items">
+              <div class="items-list">
+                <span class="items-count">{{ bill.items.length }} item(s)</span>
+                <div class="items-details" *ngIf="bill.items.length > 0">
+                  <div *ngFor="let item of bill.items.slice(0, 2)" class="item-detail">
+                    {{ item.medicineName }} ({{ item.quantity }})
+                  </div>
+                  <div *ngIf="bill.items.length > 2" class="item-detail-more">
+                    +{{ bill.items.length - 2 }} more
+                  </div>
+                </div>
+              </div>
+            </td>
+            <td class="cell-amount">
+              <span class="amount-value">₹{{ bill.subtotal | number:'1.2-2' }}</span>
+            </td>
+            <td class="cell-amount">
+              <span class="amount-value">₹{{ bill.totalGst | number:'1.2-2' }}</span>
+            </td>
+            <td class="cell-value">
+              <span class="value-amount">₹{{ bill.totalAmount | number:'1.2-2' }}</span>
+              <div *ngIf="bill.paymentStatus === 'PARTIALLY_PAID' || bill.paymentStatus === 'PAID'" class="partial-payment-info">
+                <span class="paid-amount">Paid: ₹{{ getTotalPaid(bill) | number:'1.2-2' }}</span>
+                <span *ngIf="!isOverpaid(bill) && bill.paymentStatus === 'PARTIALLY_PAID'" class="remaining-amount">
+                  Remaining: ₹{{ getRemainingBalance(bill) | number:'1.2-2' }}
+                </span>
+                <span *ngIf="isOverpaid(bill)" class="overpayment-amount">
+                  Overpaid: ₹{{ getOverpaymentAmount(bill) | number:'1.2-2' }}
+                </span>
+              </div>
+            </td>
+            <td class="cell-status">
+              <span 
+                class="badge" 
+                [class]="getPaymentStatusClass(bill.paymentStatus)">
+                {{ getPaymentStatusLabel(bill.paymentStatus) }}
+              </span>
+            </td>
+            <td class="cell-cashier">
+              <span class="cashier-name">{{ bill.cashierName }}</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- No Results -->
+    <div *ngIf="filteredBills.length === 0 && bills.length > 0" class="empty-state">
+      <svg-icon name="search" class="empty-icon" [size]="64"></svg-icon>
+      <h3 class="empty-title">No results found</h3>
+      <p class="empty-message">Try adjusting your search term</p>
+    </div>
+  </div>
+</div>
+

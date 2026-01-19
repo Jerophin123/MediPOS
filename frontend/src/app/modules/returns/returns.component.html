@@ -1,0 +1,196 @@
+<div class="returns-screen">
+  <!-- Header -->
+  <div class="returns-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="returns" class="title-icon" [size]="28"></svg-icon>
+          Returns & Refunds
+        </h1>
+        <p class="screen-subtitle">Process returns and manage refunds</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bill Search Section -->
+  <div class="search-section">
+    <div class="search-card">
+      <form [formGroup]="searchForm" (ngSubmit)="searchBill()" class="search-form">
+        <div class="form-group">
+          <label class="form-label">Bill Number</label>
+          <div class="input-wrapper">
+            <svg-icon name="search" class="input-icon" [size]="20"></svg-icon>
+            <input
+              type="text"
+              class="form-input"
+              formControlName="billNumber"
+              placeholder="Enter bill number (e.g., BILL202401170001)"
+              autofocus
+            />
+          </div>
+          <small class="form-hint">Enter the bill number from the printed invoice</small>
+        </div>
+        <button
+          type="submit"
+          class="btn-search"
+          [disabled]="searchForm.invalid || isLoading"
+        >
+          <span *ngIf="isLoading" class="spinner-mini"></span>
+          <svg-icon name="search" class="btn-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
+          <span>Search Bill</span>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Empty State -->
+  <div class="empty-state-card" *ngIf="!bill && !isLoading">
+    <svg-icon name="returns" class="empty-icon" [size]="64"></svg-icon>
+    <h3 class="empty-title">No bill selected</h3>
+    <p class="empty-message">Enter a bill number above to start processing a return</p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="empty-state-card" *ngIf="isLoading && !bill">
+    <div class="spinner"></div>
+    <p class="empty-state-text">Searching for bill...</p>
+  </div>
+
+  <!-- Bill Details Section -->
+  <div class="bill-details-section" *ngIf="bill">
+    <div class="section-header">
+      <div class="section-header-content">
+        <svg-icon name="billing" class="section-icon" [size]="24"></svg-icon>
+        <div>
+          <h2 class="section-title">Bill Details</h2>
+          <p class="section-subtitle">Bill Number: {{ bill.billNumber }}</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="bill-info-grid">
+      <div class="info-item">
+        <span class="info-label">Date</span>
+        <span class="info-value">{{ bill.billDate | date:'short' }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Cashier</span>
+        <span class="info-value">{{ bill.cashierName }}</span>
+      </div>
+      <div class="info-item" *ngIf="bill.customerName">
+        <span class="info-label">Customer</span>
+        <span class="info-value">{{ bill.customerName }}</span>
+      </div>
+      <div class="info-item" *ngIf="bill.customerPhone">
+        <span class="info-label">Phone</span>
+        <span class="info-value">{{ bill.customerPhone }}</span>
+      </div>
+    </div>
+
+    <div class="items-section">
+      <h3 class="items-title">Select Items to Return</h3>
+      
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th class="col-select">Select</th>
+              <th>Medicine</th>
+              <th>Batch</th>
+              <th>Original Qty</th>
+              <th>Return Qty</th>
+              <th>Refund Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of bill.items; trackBy: trackByItemId">
+              <td class="col-select">
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    class="checkbox-input"
+                    [checked]="isItemSelected(item.id)"
+                    (change)="toggleItem(item)"
+                  />
+                  <span class="checkbox-custom"></span>
+                </label>
+              </td>
+              <td class="cell-medicine">
+                <span class="medicine-name">{{ item.medicineName }}</span>
+              </td>
+              <td class="cell-batch">
+                <span class="batch-number">{{ item.batchNumber }}</span>
+              </td>
+              <td class="cell-quantity">
+                <span class="quantity-value">{{ item.quantity }}</span>
+              </td>
+              <td class="cell-return-qty">
+                <input
+                  type="number"
+                  class="quantity-input"
+                  [value]="getReturnQuantity(item.id)"
+                  [min]="1"
+                  [max]="item.quantity"
+                  [disabled]="!isItemSelected(item.id)"
+                  (change)="updateReturnQuantity(item.id, +$any($event.target).value)"
+                />
+              </td>
+              <td class="cell-refund">
+                <span class="refund-amount" *ngIf="isItemSelected(item.id)">
+                  ₹{{ getItemRefund(item.id) | number:'1.2-2' }}
+                </span>
+                <span class="text-muted" *ngIf="!isItemSelected(item.id)">-</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Return Form -->
+    <div class="return-form-section" *ngIf="selectedItems.length > 0">
+      <div class="refund-summary">
+        <div class="summary-content">
+          <svg-icon name="cash" class="summary-icon" [size]="24"></svg-icon>
+          <div class="summary-text">
+            <span class="summary-label">Total Refund</span>
+            <span class="summary-amount">₹{{ getTotalRefund() | number:'1.2-2' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <form [formGroup]="returnForm" (ngSubmit)="processReturn()" class="return-form">
+        <div class="form-group">
+          <label class="form-label">Return Reason <span class="required">*</span></label>
+          <textarea
+            class="form-textarea"
+            formControlName="reason"
+            rows="3"
+            placeholder="Enter reason for return (e.g., Customer request, Defective product, etc.)"
+          ></textarea>
+          <div class="form-error" *ngIf="returnForm.get('reason')?.invalid && returnForm.get('reason')?.touched">
+            Return reason is required
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            type="button"
+            class="btn-secondary"
+            (click)="resetForm()"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            class="btn-primary"
+            [disabled]="returnForm.invalid || isProcessing"
+          >
+            <span *ngIf="isProcessing" class="spinner-mini"></span>
+            <span *ngIf="!isProcessing">Process Return</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

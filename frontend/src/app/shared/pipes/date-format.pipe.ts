@@ -1,0 +1,17 @@
+import { Pipe, PipeTransform } from '@angular/core';
+import { DatePipe } from '@angular/common';
+
+@Pipe({
+  name: 'dateFormat',
+  standalone: false
+})
+export class DateFormatPipe implements PipeTransform {
+  transform(value: string | Date, format: string = 'short'): string {
+    if (!value) return '';
+    const datePipe = new DatePipe('en-US');
+    return datePipe.transform(value, format) || '';
+  }
+}
+
+
+

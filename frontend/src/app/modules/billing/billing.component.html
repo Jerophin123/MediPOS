@@ -1,0 +1,308 @@
+<div class="billing-screen">
+  <!-- Header -->
+  <div class="billing-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="billing" class="title-icon" [size]="28"></svg-icon>
+          Billing
+        </h1>
+        <p class="screen-subtitle">Create new bills and process payments</p>
+      </div>
+      <button class="btn-reset" (click)="resetBill()" [disabled]="isLoading">
+        <svg-icon name="refresh" class="btn-reset-icon" [size]="16"></svg-icon>
+        <span>Reset</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Layout -->
+  <div class="billing-layout">
+    <div class="search-summary-row">
+      <!-- Work Area -->
+      <div class="work-area">
+      <!-- Search Section -->
+      <div class="search-section">
+        <div class="search-card">
+          <h3 class="section-title">Add Items</h3>
+          
+          <div class="search-fields-row">
+            <!-- Barcode Search -->
+            <div class="form-group">
+              <label class="form-label">Scan Barcode</label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="searchBarcode"
+                  (keyup.enter)="onBarcodeScan()"
+                  placeholder="Scan or enter barcode (GTIN/EAN)"
+                  [disabled]="isLoading || isScanning"
+                />
+                <button
+                  type="button"
+                  class="btn-camera"
+                  (click)="startScanning()"
+                  [disabled]="isLoading || isScanning || !hasCamera"
+                  title="Scan with camera"
+                >
+                  <svg-icon name="barcode" [size]="18"></svg-icon>
+                </button>
+                <button
+                  type="button"
+                  class="btn-search"
+                  (click)="onBarcodeScan()"
+                  [disabled]="isLoading || isScanning || !searchBarcode.trim()"
+                  title="Search barcode"
+                >
+                  <svg-icon name="search" [size]="18"></svg-icon>
+                </button>
+              </div>
+              <small class="form-hint">Barcode identifies the product. Click camera icon to scan.</small>
+            </div>
+
+            <!-- Medicine Search -->
+            <div class="form-group">
+              <label class="form-label">Search Medicine</label>
+              <div class="input-wrapper">
+                <input
+                  type="text"
+                  class="form-input"
+                  [(ngModel)]="searchMedicine"
+                  (keyup.enter)="onMedicineSearch()"
+                  placeholder="Search by medicine name"
+                  [disabled]="isLoading"
+                />
+                <button
+                  type="button"
+                  class="btn-search"
+                  (click)="onMedicineSearch()"
+                  [disabled]="isLoading || !searchMedicine.trim() || searchMedicine.trim().length < 2"
+                >
+                  <svg-icon name="search" [size]="18"></svg-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Items List -->
+      <div class="items-section" *ngIf="items.length > 0">
+        <div class="section-header">
+          <h3 class="section-title">Bill Items</h3>
+        </div>
+        <div class="items-list">
+          <div class="item-card" *ngFor="let item of items; let i = index">
+            <div class="item-info">
+              <h4 class="item-name">{{ item.medicine?.name || 'Medicine' }}</h4>
+              <p class="item-details" *ngIf="item.medicine">
+                {{ item.medicine.manufacturer }} • HSN: {{ item.medicine.hsnCode }}
+              </p>
+            </div>
+            <div class="item-controls">
+              <div class="quantity-control">
+                <button
+                  type="button"
+                  class="btn-quantity"
+                  (click)="updateQuantity(i, item.quantity - 1)"
+                  [disabled]="item.quantity <= 1"
+                >
+                  -
+                </button>
+                <input
+                  type="number"
+                  class="quantity-input"
+                  [value]="item.quantity"
+                  (change)="updateQuantity(i, +$any($event.target).value)"
+                  min="1"
+                />
+                <button
+                  type="button"
+                  class="btn-quantity"
+                  (click)="updateQuantity(i, item.quantity + 1)"
+                >
+                  +
+                </button>
+              </div>
+              <div class="item-price">
+                <span class="price-label">Price:</span>
+                <span class="price-value" *ngIf="item.total && item.total > 0">
+                  ₹{{ item.total | number:'1.2-2' }}
+                </span>
+                <span class="price-value price-pending" *ngIf="!item.total || item.total === 0">
+                  Will be calculated
+                </span>
+              </div>
+              <button
+                type="button"
+                class="btn-remove"
+                (click)="removeItem(i)"
+                title="Remove item"
+              >
+                <svg-icon name="error" [size]="18"></svg-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="items.length === 0">
+        <svg-icon name="billing" class="empty-icon" [size]="64"></svg-icon>
+        <h3 class="empty-title">No items added</h3>
+        <p class="empty-message">Scan a barcode or search for a medicine to add items</p>
+      </div>
+      </div>
+
+      <!-- Summary Sidebar -->
+      <div class="summary-sidebar summary-panel">
+        <form [formGroup]="billForm">
+          <div class="summary-card">
+            <!-- Customer Info -->
+            <div class="summary-section">
+              <h3 class="card-title">Customer Information</h3>
+              <div class="customer-fields-row">
+                <div class="form-group form-group-small">
+                  <label class="form-label">Name (Optional)</label>
+                  <input
+                    type="text"
+                    class="form-input form-input-small"
+                    formControlName="customerName"
+                    placeholder="Customer name"
+                  />
+                </div>
+                <div class="form-group form-group-small">
+                  <label class="form-label">Phone (Optional)</label>
+                  <input
+                    type="text"
+                    class="form-input form-input-small"
+                    formControlName="customerPhone"
+                    placeholder="Phone number"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="section-divider"></div>
+
+            <!-- Payments -->
+            <div class="summary-section">
+              <div class="card-header">
+                <h3 class="card-title">Payments</h3>
+                <button
+                  type="button"
+                  class="btn-add-payment"
+                  (click)="addPayment()"
+                >
+                  + Add
+                </button>
+              </div>
+              <div formArrayName="payments">
+                <div
+                  *ngFor="let payment of paymentsFormArray.controls; let i = index"
+                  [formGroupName]="i"
+                  class="payment-item-wrapper"
+                >
+                  <div class="payment-item">
+                    <select class="form-input" formControlName="mode" (change)="onPaymentModeChange(i)">
+                      <option [value]="PaymentMode.CASH">Cash</option>
+                      <option [value]="PaymentMode.UPI">UPI</option>
+                      <option [value]="PaymentMode.CARD">Card</option>
+                    </select>
+                    <input
+                      type="number"
+                      class="form-input"
+                      formControlName="amount"
+                      placeholder="Amount"
+                      step="0.01"
+                      min="0.01"
+                    />
+                    <button
+                      type="button"
+                      class="btn-remove"
+                      (click)="removePayment(i)"
+                      *ngIf="paymentsFormArray.length > 1"
+                    >
+                      <svg-icon name="error" [size]="18"></svg-icon>
+                    </button>
+                  </div>
+                  <!-- Cash fields -->
+                  <div class="cash-fields" *ngIf="payment.get('mode')?.value === PaymentMode.CASH">
+                    <input
+                      type="number"
+                      class="form-input cash-input"
+                      formControlName="cashProvided"
+                      placeholder="Cash provided"
+                      step="0.01"
+                      min="0"
+                    />
+                    <div class="balance-display">
+                      <span class="balance-label">Balance:</span>
+                      <span class="balance-value">₹{{ getCashChange(i) | number:'1.2-2' }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="section-divider"></div>
+
+            <!-- Totals -->
+            <div class="summary-section total-section">
+              <div class="totals-list">
+                <div class="total-row">
+                  <span class="total-label">Subtotal</span>
+                  <span class="total-value">₹{{ subtotal | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row">
+                  <span class="total-label">GST</span>
+                  <span class="total-value">₹{{ totalGst | number:'1.2-2' }}</span>
+                </div>
+                <div class="total-row total-row-final">
+                  <span class="total-label">Total Amount</span>
+                  <span class="total-value total-value-final">₹{{ totalAmount | number:'1.2-2' }}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="btn-create-bill"
+                (click)="createBill()"
+                [disabled]="isLoading || items.length === 0"
+              >
+                <span *ngIf="isLoading" class="spinner-mini"></span>
+                <span *ngIf="!isLoading">Create Bill</span>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Camera Scanner Modal -->
+<div class="scanner-overlay" *ngIf="isScanning" (click)="stopScanning()">
+  <div class="scanner-container" (click)="$event.stopPropagation()">
+    <div class="scanner-header">
+      <h3 class="scanner-title">Scan Barcode</h3>
+      <button type="button" class="btn-close-scanner" (click)="stopScanning()" aria-label="Close scanner">
+        <svg-icon name="error" [size]="20"></svg-icon>
+      </button>
+    </div>
+    <div class="scanner-body">
+      <video id="video-scanner" class="scanner-video" autoplay playsinline muted></video>
+      <div class="scanner-overlay-frame">
+        <div class="scanner-frame"></div>
+        <p class="scanner-hint">Position barcode within the frame</p>
+      </div>
+    </div>
+    <div class="scanner-footer">
+      <button type="button" class="btn-stop-scan" (click)="stopScanning()">
+        Stop Scanning
+      </button>
+    </div>
+  </div>
+</div>

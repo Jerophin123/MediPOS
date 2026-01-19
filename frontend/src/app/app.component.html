@@ -1,0 +1,4 @@
+<app-shell *ngIf="isAuthenticated"></app-shell>
+<router-outlet *ngIf="!isAuthenticated"></router-outlet>
+<app-dialog></app-dialog>
+

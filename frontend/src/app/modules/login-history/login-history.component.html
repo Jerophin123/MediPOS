@@ -1,0 +1,110 @@
+<div class="login-history-screen">
+  <!-- Header -->
+  <div class="login-history-header">
+    <div class="header-content">
+      <div class="header-title">
+        <h1 class="screen-title">
+          <svg-icon name="login-history" class="title-icon" [size]="28"></svg-icon>
+          Login/Logout History
+        </h1>
+        <p class="screen-subtitle">Track user login and logout activities</p>
+      </div>
+      <button 
+        class="btn-refresh" 
+        (click)="loadLoginLogoutLogs()"
+        [disabled]="isLoading"
+        aria-label="Refresh login history"
+      >
+        <svg-icon name="refresh" class="refresh-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
+        <span class="spinner-mini" *ngIf="isLoading"></span>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-section">
+    <div class="filters-card">
+      <div class="filters-content">
+        <div class="filter-group">
+          <label class="filter-label">Search</label>
+          <div class="search-input-wrapper">
+            <svg-icon name="search" class="search-icon" [size]="20"></svg-icon>
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Search by username or name..."
+              [(ngModel)]="searchTerm"
+              (ngModelChange)="filterLogs()"
+            />
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Type</label>
+          <select class="filter-select" [(ngModel)]="selectedType" (ngModelChange)="filterLogs()">
+            <option value="ALL">All Types</option>
+            <option value="LOGIN">Login Only</option>
+            <option value="LOGOUT">Logout Only</option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Login/Logout Logs -->
+  <div class="logs-section">
+    <div class="logs-card">
+      <div class="table-container">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Time Ago</th>
+              <th>User</th>
+              <th>Role</th>
+              <th>Action</th>
+              <th>IP Address</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngIf="isLoading">
+              <td colspan="6" class="loading-cell">
+                <div class="loading-spinner"></div>
+                <span>Loading login history...</span>
+              </td>
+            </tr>
+            <tr *ngIf="!isLoading && filteredLogs.length === 0">
+              <td colspan="6" class="empty-cell">
+                <svg-icon name="user" class="empty-icon" [size]="48"></svg-icon>
+                <p>No login/logout records found</p>
+              </td>
+            </tr>
+            <tr *ngFor="let log of filteredLogs" class="log-row">
+              <td class="timestamp-cell">{{ formatDate(log.timestamp) }}</td>
+              <td class="time-ago-cell">{{ getTimeAgo(log.timestamp) }}</td>
+              <td>
+                <div class="user-info">
+                  <span class="username">{{ log.username }}</span>
+                  <span class="fullname">{{ log.fullName }}</span>
+                </div>
+              </td>
+              <td><span class="role-badge">{{ log.role }}</span></td>
+              <td>
+                <span class="action-badge" [ngClass]="getActionBadgeClass(log.action)">
+                  {{ getActionType(log.action) }}
+                </span>
+              </td>
+              <td class="ip-cell">{{ log.ipAddress || 'N/A' }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="table-footer">
+        <p class="log-count">Showing {{ filteredLogs.length }} of {{ loginLogoutLogs.length }} login/logout records</p>
+      </div>
+    </div>
+  </div>
+</div>
+

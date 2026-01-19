@@ -1,0 +1,229 @@
+/* ============================================
+   LIQUID GLASS DESIGN TOKENS
+   Apple-style Glassmorphism System
+   ============================================ */
+
+@import './design-tokens';
+
+/* ============================================
+   GLASS LAYER SYSTEM
+   ============================================ */
+
+/* Glass Base - Background containers
+   Light: Frosted glass on warm off-white base (slight milkiness)
+   Dark: Smoked glass (deeper blur, softer highlights) */
+$glass-base-bg-light: rgba(255, 255, 255, 0.72);
+$glass-base-bg-dark: rgba(15, 20, 25, 0.82);
+$glass-base-blur: 20px;
+$glass-base-border-light: rgba(255, 255, 255, 0.2);
+$glass-base-border-dark: rgba(255, 255, 255, 0.1);
+$glass-base-shadow-light: 0 8px 32px 0 rgba(0, 0, 0, 0.08);
+$glass-base-shadow-dark: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+
+/* Glass Elevated - Cards, panels
+   Light: More opacity for clarity
+   Dark: Deeper, more smoked appearance */
+$glass-elevated-bg-light: rgba(255, 255, 255, 0.78);
+$glass-elevated-bg-dark: rgba(26, 31, 46, 0.88);
+$glass-elevated-blur: 24px;
+$glass-elevated-border-light: rgba(255, 255, 255, 0.22);
+$glass-elevated-border-dark: rgba(255, 255, 255, 0.12);
+$glass-elevated-shadow-light: 0 12px 40px 0 rgba(0, 0, 0, 0.1);
+$glass-elevated-shadow-dark: 0 12px 40px 0 rgba(0, 0, 0, 0.55);
+
+/* Glass Floating - Modals, summaries
+   Light: Highest clarity for important content
+   Dark: Deepest smoke for maximum contrast */
+$glass-floating-bg-light: rgba(255, 255, 255, 0.85);
+$glass-floating-bg-dark: rgba(37, 43, 58, 0.92);
+$glass-floating-blur: 30px;
+$glass-floating-border-light: rgba(255, 255, 255, 0.28);
+$glass-floating-border-dark: rgba(255, 255, 255, 0.15);
+$glass-floating-shadow-light: 0 20px 60px 0 rgba(0, 0, 0, 0.12);
+$glass-floating-shadow-dark: 0 20px 60px 0 rgba(0, 0, 0, 0.65);
+
+/* Glass Highlight - Inner light reflection
+   Light: Brighter highlight for depth perception
+   Dark: Softer highlight (no pure white) */
+$glass-highlight-light: rgba(255, 255, 255, 0.45);
+$glass-highlight-dark: rgba(255, 255, 255, 0.18);
+
+/* Glass Noise - Subtle texture */
+$glass-noise-opacity: 0.03;
+
+/* ============================================
+   CSS VARIABLES - LIGHT MODE
+   ============================================ */
+:root,
+:root.light-theme {
+  /* Glass Base */
+  --glass-base-bg: #{$glass-base-bg-light};
+  --glass-base-blur: #{$glass-base-blur};
+  --glass-base-border: #{$glass-base-border-light};
+  --glass-base-shadow: #{$glass-base-shadow-light};
+  --glass-base-highlight: #{$glass-highlight-light};
+
+  /* Glass Elevated */
+  --glass-elevated-bg: #{$glass-elevated-bg-light};
+  --glass-elevated-blur: #{$glass-elevated-blur};
+  --glass-elevated-border: #{$glass-elevated-border-light};
+  --glass-elevated-shadow: #{$glass-elevated-shadow-light};
+  --glass-elevated-highlight: #{$glass-highlight-light};
+
+  /* Glass Floating */
+  --glass-floating-bg: #{$glass-floating-bg-light};
+  --glass-floating-blur: #{$glass-floating-blur};
+  --glass-floating-border: #{$glass-floating-border-light};
+  --glass-floating-shadow: #{$glass-floating-shadow-light};
+  --glass-floating-highlight: #{$glass-highlight-light};
+
+  /* Glass Noise */
+  --glass-noise-opacity: #{$glass-noise-opacity};
+}
+
+/* ============================================
+   CSS VARIABLES - DARK MODE
+   ============================================ */
+:root.dark-theme {
+  /* Glass Base */
+  --glass-base-bg: #{$glass-base-bg-dark};
+  --glass-base-blur: #{$glass-base-blur};
+  --glass-base-border: #{$glass-base-border-dark};
+  --glass-base-shadow: #{$glass-base-shadow-dark};
+  --glass-base-highlight: #{$glass-highlight-dark};
+
+  /* Glass Elevated */
+  --glass-elevated-bg: #{$glass-elevated-bg-dark};
+  --glass-elevated-blur: #{$glass-elevated-blur};
+  --glass-elevated-border: #{$glass-elevated-border-dark};
+  --glass-elevated-shadow: #{$glass-elevated-shadow-dark};
+  --glass-elevated-highlight: #{$glass-highlight-dark};
+
+  /* Glass Floating */
+  --glass-floating-bg: #{$glass-floating-bg-dark};
+  --glass-floating-blur: #{$glass-floating-blur};
+  --glass-floating-border: #{$glass-floating-border-dark};
+  --glass-floating-shadow: #{$glass-floating-shadow-dark};
+  --glass-floating-highlight: #{$glass-highlight-dark};
+
+  /* Glass Noise */
+  --glass-noise-opacity: #{$glass-noise-opacity};
+}
+
+/* ============================================
+   GLASS MIXINS
+   ============================================ */
+
+/* Glass Base Material */
+@mixin glass-base {
+  background: var(--glass-base-bg);
+  backdrop-filter: blur(var(--glass-base-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-base-blur)) saturate(180%);
+  border: 1px solid var(--glass-base-border);
+  box-shadow: var(--glass-base-shadow);
+  
+  /* Inner highlight */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--glass-base-highlight),
+      transparent
+    );
+    pointer-events: none;
+  }
+}
+
+/* Glass Elevated Material */
+@mixin glass-elevated {
+  background: var(--glass-elevated-bg);
+  backdrop-filter: blur(var(--glass-elevated-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-elevated-blur)) saturate(180%);
+  border: 1px solid var(--glass-elevated-border);
+  box-shadow: var(--glass-elevated-shadow);
+  
+  /* Inner highlight */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--glass-elevated-highlight),
+      transparent
+    );
+    pointer-events: none;
+  }
+}
+
+/* Glass Floating Material */
+@mixin glass-floating {
+  background: var(--glass-floating-bg);
+  backdrop-filter: blur(var(--glass-floating-blur)) saturate(180%);
+  -webkit-backdrop-filter: blur(var(--glass-floating-blur)) saturate(180%);
+  border: 1px solid var(--glass-floating-border);
+  box-shadow: var(--glass-floating-shadow);
+  
+  /* Inner highlight */
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      var(--glass-floating-highlight),
+      transparent
+    );
+    pointer-events: none;
+  }
+}
+
+/* Glass Hover State - Gentle lift */
+@mixin glass-hover {
+  transition: all 220ms cubic-bezier(0.4, 0, 0.2, 1);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-elevated-shadow);
+    border-color: var(--glass-elevated-border);
+  }
+}
+
+/* Glass Active State - Subtle compression */
+@mixin glass-active {
+  &:active {
+    transform: translateY(0) scale(0.98);
+    transition: all 120ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+}
+
+/* Glass Interactive - Combines hover and active */
+@mixin glass-interactive {
+  @include glass-hover;
+  @include glass-active;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Glass Fallback - For browsers without backdrop-filter support */
+@mixin glass-fallback {
+  @supports not (backdrop-filter: blur(1px)) {
+    background: var(--surface-elevated);
+    border: 1px solid var(--border-subtle);
+  }
+}
+

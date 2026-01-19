@@ -1,0 +1,201 @@
+@import 'design-tokens';
+@import 'animations';
+
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  padding: $space-4;
+  @include animate-fade-in();
+}
+
+.dialog-container {
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 24px;
+  box-shadow: var(--shadow-xl);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  @include animate-slide-up();
+}
+
+.dialog-header {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-5 $space-6;
+  border-bottom: 1px solid var(--border-subtle);
+
+  &.dialog-info {
+    .dialog-icon {
+      color: var(--accent-primary);
+    }
+  }
+
+  &.dialog-success {
+    .dialog-icon {
+      color: var(--color-success);
+    }
+  }
+
+  &.dialog-warning {
+    .dialog-icon {
+      color: var(--accent-warning);
+    }
+  }
+
+  &.dialog-error {
+    .dialog-icon {
+      color: var(--accent-danger);
+    }
+  }
+
+  &.dialog-confirm {
+    .dialog-icon {
+      color: var(--accent-primary);
+    }
+  }
+}
+
+.dialog-icon {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dialog-title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.dialog-body {
+  padding: $space-6;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.dialog-message {
+  font-size: $font-size-base;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: $space-3;
+  padding: $space-5 $space-6;
+  border-top: 1px solid var(--border-subtle);
+  background: var(--surface-floating);
+}
+
+.btn-dialog {
+  padding: $space-3 $space-6;
+  border: none;
+  border-radius: 18px;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  @include transition-base();
+  min-width: 100px;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.btn-cancel {
+  background: var(--surface-interactive);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+
+  &:hover {
+    background: var(--color-base-300);
+  }
+}
+
+.btn-confirm {
+  color: white;
+  background: var(--accent-primary); // Default primary color
+
+  &:hover {
+    background: var(--color-primary-dark);
+  }
+
+  &.btn-info {
+    background: var(--accent-primary);
+
+    &:hover {
+      background: var(--color-primary-dark);
+    }
+  }
+
+  &.btn-success {
+    background: var(--color-success);
+
+    &:hover {
+      background: darken($color-success, 10%);
+    }
+  }
+
+  &.btn-warning {
+    background: var(--accent-warning);
+
+    &:hover {
+      background: darken($color-warning, 10%);
+    }
+  }
+
+  &.btn-error {
+    background: var(--accent-danger);
+
+    &:hover {
+      background: darken($color-danger, 10%);
+    }
+  }
+
+  &.btn-confirm {
+    background: var(--accent-primary);
+
+    &:hover {
+      background: var(--color-primary-dark);
+    }
+  }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dialog-container {
+    max-width: 90%;
+    margin: $space-4;
+  }
+
+  .dialog-header,
+  .dialog-body,
+  .dialog-footer {
+    padding: $space-4;
+  }
+}
+
