@@ -26,8 +26,16 @@ public interface AuditLogRepository extends JpaRepository<AuditLog, Long> {
                                              @Param("startDate") LocalDateTime startDate,
                                              @Param("endDate") LocalDateTime endDate);
     
+    @Query(value = "SELECT * FROM audit_logs WHERE action = :action AND timestamp BETWEEN :startDate AND :endDate ORDER BY timestamp DESC LIMIT 50", nativeQuery = true)
+    List<AuditLog> findTop50ByActionAndDateRange(@Param("action") String action,
+                                                  @Param("startDate") LocalDateTime startDate,
+                                                  @Param("endDate") LocalDateTime endDate);
+    
     @Query("SELECT a FROM AuditLog a ORDER BY a.timestamp DESC")
     List<AuditLog> findAllByOrderByTimestampDesc();
+    
+    @Query(value = "SELECT * FROM audit_logs ORDER BY timestamp DESC LIMIT 50", nativeQuery = true)
+    List<AuditLog> findTop50ByOrderByTimestampDesc();
 }
 
 

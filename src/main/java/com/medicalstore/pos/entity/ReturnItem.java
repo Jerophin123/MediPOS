@@ -35,15 +35,17 @@ public class ReturnItem {
     @JoinColumn(name = "batch_id", nullable = false, foreignKey = @ForeignKey(name = "fk_return_item_batch"))
     private Batch batch;
     
-    @Column(nullable = false, length = 50)
+    @Column(name = "batch_number", nullable = false, length = 50)
     private String batchNumber;
     
     @Column(nullable = false)
     private Integer quantity;
     
-    @Column(nullable = false, precision = 10, scale = 2)
+    @Column(name = "refund_amount", nullable = false, precision = 10, scale = 2)
     private BigDecimal refundAmount;
 }
+
+
 
 
 

@@ -3,9 +3,14 @@ package com.medicalstore.pos.service;
 import com.medicalstore.pos.dto.request.ReturnItemRequest;
 import com.medicalstore.pos.dto.request.ReturnRequest;
 import com.medicalstore.pos.dto.response.BillResponse;
+import com.medicalstore.pos.dto.response.BillItemResponse;
+import com.medicalstore.pos.dto.response.PaymentResponse;
+import com.medicalstore.pos.dto.response.ReturnResponse;
+import com.medicalstore.pos.dto.response.ReturnItemResponse;
 import com.medicalstore.pos.entity.Bill;
 import com.medicalstore.pos.entity.BillItem;
 import com.medicalstore.pos.entity.AuditLog;
+import com.medicalstore.pos.entity.Payment;
 import com.medicalstore.pos.entity.Return;
 import com.medicalstore.pos.entity.ReturnItem;
 import com.medicalstore.pos.entity.Return.ReturnType;
@@ -22,6 +27,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 public class ReturnService {
@@ -46,8 +52,25 @@ public class ReturnService {
      */
     @Transactional(rollbackFor = Exception.class)
     public BillResponse processReturn(ReturnRequest request, User user, HttpServletRequest httpRequest) {
-        Bill originalBill = billRepository.findById(request.getBillId())
-                .orElseThrow(() -> new RuntimeException("Bill not found with id: " + request.getBillId()));
+        // Get the bill entity - use getReferenceById to get a managed proxy
+        // This ensures the entity is properly managed in the persistence context
+        if (!billRepository.existsById(request.getBillId())) {
+            throw new RuntimeException("Bill not found with id: " + request.getBillId());
+        }
+        
+        // Use getReferenceById to get a managed entity reference (proxy)
+        // This is better for foreign key relationships as it doesn't load the full entity
+        Bill originalBill = billRepository.getReferenceById(request.getBillId());
+        
+        // Verify bill has an ID by accessing it (this will trigger proxy initialization if needed)
+        Long billId = originalBill.getId();
+        if (billId == null) {
+            throw new RuntimeException("Bill ID is null");
+        }
+        
+        // Force load bill items and payments within transaction to avoid LazyInitializationException
+        originalBill.getBillItems().size();
+        originalBill.getPayments().size();
         
         if (originalBill.getCancelled()) {
             throw new RuntimeException("Cannot process return for a cancelled bill");
@@ -89,18 +112,44 @@ public class ReturnService {
             }
         }
         
-        // Create return entity
-        Return returnEntity = Return.builder()
-                .returnNumber(returnNumber)
-                .originalBill(originalBill)
-                .processedBy(user)
-                .returnDate(LocalDateTime.now())
-                .refundAmount(totalRefund)
-                .reason(request.getReason())
-                .returnType(returnType)
-                .build();
+        // Create return entity - ensure originalBill is properly set
+        // Validate that originalBill is not null and has an ID
+        if (originalBill == null || originalBill.getId() == null) {
+            throw new RuntimeException("Invalid bill entity: bill is null or has no ID");
+        }
         
-        returnEntity = returnRepository.save(returnEntity);
+        // Create return entity using constructor and setters to ensure relationships are set
+        // Using setters instead of builder to avoid any Lombok builder issues with relationships
+        Return returnEntity = new Return();
+        returnEntity.setReturnNumber(returnNumber);
+        returnEntity.setOriginalBill(originalBill);  // Set the managed bill entity
+        returnEntity.setProcessedBy(user);  // Set the user entity
+        returnEntity.setReturnDate(LocalDateTime.now());
+        returnEntity.setRefundAmount(totalRefund);
+        returnEntity.setReason(request.getReason());
+        returnEntity.setReturnType(returnType);
+        
+        // Double-check relationships are set
+        if (returnEntity.getOriginalBill() == null) {
+            throw new RuntimeException("originalBill is null after setting. Bill ID was: " + billId);
+        }
+        if (returnEntity.getOriginalBill().getId() == null) {
+            throw new RuntimeException("originalBill.getId() is null. Bill entity: " + originalBill);
+        }
+        if (returnEntity.getProcessedBy() == null) {
+            throw new RuntimeException("processedBy is null after setting. User ID was: " + 
+                    (user != null ? user.getId() : "null"));
+        }
+        if (returnEntity.getProcessedBy().getId() == null) {
+            throw new RuntimeException("processedBy.getId() is null. User entity: " + user);
+        }
+        
+        // Log for debugging
+        System.out.println("DEBUG: Before save - originalBill.id=" + returnEntity.getOriginalBill().getId() + 
+                          ", processedBy.id=" + returnEntity.getProcessedBy().getId());
+        
+        // Save the entity
+        returnEntity = returnRepository.saveAndFlush(returnEntity);  // Use saveAndFlush to force immediate persistence
         
         // Create return items with proper reference
         for (ReturnItemRequest itemRequest : request.getItems()) {
@@ -151,7 +200,19 @@ public class ReturnService {
     }
     
     private BillResponse mapBillToResponse(Bill bill) {
-        // Simplified mapping - in production, use proper mapper
+        // Map bill items
+        List<BillItemResponse> items = bill.getBillItems().stream()
+                .map(this::mapItemToResponse)
+                .collect(Collectors.toList());
+        
+        // Map payments
+        List<PaymentResponse> payments = bill.getPayments().stream()
+                .map(this::mapPaymentToResponse)
+                .collect(Collectors.toList());
+        
+        // Recalculate payment status based on actual payments
+        Bill.PaymentStatus calculatedStatus = calculatePaymentStatus(bill);
+        
         return BillResponse.builder()
                 .id(bill.getId())
                 .billNumber(bill.getBillNumber())
@@ -163,11 +224,169 @@ public class ReturnService {
                 .subtotal(bill.getSubtotal())
                 .totalGst(bill.getTotalGst())
                 .totalAmount(bill.getTotalAmount())
-                .paymentStatus(bill.getPaymentStatus())
+                .paymentStatus(calculatedStatus)
                 .cancelled(bill.getCancelled())
                 .cancellationReason(bill.getCancellationReason())
+                .items(items)
+                .payments(payments)
                 .createdAt(bill.getCreatedAt())
                 .build();
     }
+    
+    /**
+     * Calculates payment status based on total paid amount vs bill total
+     */
+    private Bill.PaymentStatus calculatePaymentStatus(Bill bill) {
+        if (bill.getCancelled()) {
+            return bill.getPaymentStatus(); // Keep original status for cancelled bills
+        }
+        
+        BigDecimal totalPaid = bill.getPayments().stream()
+                .filter(p -> p.getStatus() == Payment.PaymentStatus.COMPLETED)
+                .map(Payment::getAmount)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        
+        if (totalPaid.compareTo(bill.getTotalAmount()) < 0) {
+            return Bill.PaymentStatus.PARTIALLY_PAID;
+        } else {
+            return Bill.PaymentStatus.PAID;
+        }
+    }
+    
+    private BillItemResponse mapItemToResponse(BillItem item) {
+        return BillItemResponse.builder()
+                .id(item.getId())
+                .medicineId(item.getMedicine().getId())
+                .medicineName(item.getMedicine().getName())
+                .batchNumber(item.getBatchNumber())
+                .quantity(item.getQuantity())
+                .unitPrice(item.getUnitPrice())
+                .gstPercentage(item.getGstPercentage())
+                .gstAmount(item.getGstAmount())
+                .totalAmount(item.getTotalAmount())
+                .build();
+    }
+    
+    private PaymentResponse mapPaymentToResponse(Payment payment) {
+        return PaymentResponse.builder()
+                .id(payment.getId())
+                .paymentReference(payment.getPaymentReference())
+                .mode(payment.getMode())
+                .amount(payment.getAmount())
+                .status(payment.getStatus())
+                .paymentDate(payment.getPaymentDate())
+                .build();
+    }
+    
+    /**
+     * Get all returns
+     */
+    @Transactional(readOnly = true)
+    public List<ReturnResponse> getAllReturns() {
+        try {
+            List<Return> returns = returnRepository.findAll();
+            if (returns == null || returns.isEmpty()) {
+                return new ArrayList<>();
+            }
+            // Force load all relationships before mapping
+            for (Return returnEntity : returns) {
+                if (returnEntity.getOriginalBill() != null) {
+                    returnEntity.getOriginalBill().getBillNumber();
+                }
+                if (returnEntity.getProcessedBy() != null) {
+                    returnEntity.getProcessedBy().getFullName();
+                }
+            }
+            return returns.stream()
+                    .map(this::mapReturnToResponse)
+                    .collect(Collectors.toList());
+        } catch (Exception e) {
+            throw new RuntimeException("Error fetching returns: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Get return by ID
+     */
+    @Transactional(readOnly = true)
+    public ReturnResponse getReturnById(Long id) {
+        Return returnEntity = returnRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Return not found with id: " + id));
+        return mapReturnToResponse(returnEntity);
+    }
+    
+    /**
+     * Get returns by bill ID
+     */
+    @Transactional(readOnly = true)
+    public List<ReturnResponse> getReturnsByBillId(Long billId) {
+        List<Return> returns = returnRepository.findByOriginalBillId(billId);
+        return returns.stream()
+                .map(this::mapReturnToResponse)
+                .collect(Collectors.toList());
+    }
+    
+    /**
+     * Map Return entity to ReturnResponse DTO
+     */
+    private ReturnResponse mapReturnToResponse(Return returnEntity) {
+        try {
+            // Force load lazy relationships within transaction
+            if (returnEntity.getOriginalBill() != null) {
+                returnEntity.getOriginalBill().getBillNumber();
+            }
+            if (returnEntity.getProcessedBy() != null) {
+                returnEntity.getProcessedBy().getFullName();
+            }
+            
+            // Load return items (JOIN FETCH should eagerly load medicine and batch)
+            List<ReturnItem> returnItems = returnItemRepository.findByReturnEntity(returnEntity);
+            
+            List<ReturnItemResponse> items = (returnItems != null) 
+                    ? returnItems.stream()
+                            .map(this::mapReturnItemToResponse)
+                            .collect(Collectors.toList())
+                    : new ArrayList<>();
+            
+            return ReturnResponse.builder()
+                    .id(returnEntity.getId())
+                    .returnNumber(returnEntity.getReturnNumber())
+                    .billId(returnEntity.getOriginalBill() != null ? returnEntity.getOriginalBill().getId() : null)
+                    .billNumber(returnEntity.getOriginalBill() != null ? returnEntity.getOriginalBill().getBillNumber() : null)
+                    .processedById(returnEntity.getProcessedBy() != null ? returnEntity.getProcessedBy().getId() : null)
+                    .processedByName(returnEntity.getProcessedBy() != null ? returnEntity.getProcessedBy().getFullName() : null)
+                    .returnDate(returnEntity.getReturnDate())
+                    .refundAmount(returnEntity.getRefundAmount())
+                    .reason(returnEntity.getReason())
+                    .returnType(returnEntity.getReturnType())
+                    .createdAt(returnEntity.getCreatedAt())
+                    .items(items)
+                    .build();
+        } catch (Exception e) {
+            throw new RuntimeException("Error mapping return to response: " + e.getMessage(), e);
+        }
+    }
+    
+    /**
+     * Map ReturnItem entity to ReturnItemResponse DTO
+     */
+    private ReturnItemResponse mapReturnItemToResponse(ReturnItem returnItem) {
+        // Ensure lazy relationships are loaded (JOIN FETCH should handle this, but be safe)
+        if (returnItem.getMedicine() != null) {
+            returnItem.getMedicine().getName(); // Force load
+        }
+        if (returnItem.getBatch() != null) {
+            returnItem.getBatch().getId(); // Force load
+        }
+        
+        return ReturnItemResponse.builder()
+                .id(returnItem.getId())
+                .medicineId(returnItem.getMedicine() != null ? returnItem.getMedicine().getId() : null)
+                .medicineName(returnItem.getMedicine() != null ? returnItem.getMedicine().getName() : null)
+                .batchId(returnItem.getBatch() != null ? returnItem.getBatch().getId() : null)
+                .batchNumber(returnItem.getBatchNumber())
+                .quantity(returnItem.getQuantity())
+                .refundAmount(returnItem.getRefundAmount())
+                .build();
+    }
 }
-

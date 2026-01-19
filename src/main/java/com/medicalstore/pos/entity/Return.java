@@ -11,9 +11,9 @@ import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "returns", indexes = {
-    @Index(name = "idx_return_bill", columnList = "originalBill_id"),
-    @Index(name = "idx_return_date", columnList = "returnDate"),
-    @Index(name = "idx_return_number", columnList = "returnNumber", unique = true)
+    @Index(name = "idx_return_bill", columnList = "original_bill_id"),
+    @Index(name = "idx_return_date", columnList = "return_date"),
+    @Index(name = "idx_return_number", columnList = "return_number", unique = true)
 })
 @Data
 @NoArgsConstructor
@@ -29,11 +29,11 @@ public class Return {
     private String returnNumber;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "originalBill_id", nullable = false, foreignKey = @ForeignKey(name = "fk_return_bill"))
+    @JoinColumn(name = "original_bill_id", nullable = false, foreignKey = @ForeignKey(name = "fk_return_bill"))
     private Bill originalBill;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "processedBy_id", nullable = false, foreignKey = @ForeignKey(name = "fk_return_user"))
+    @JoinColumn(name = "processed_by_id", nullable = false, foreignKey = @ForeignKey(name = "fk_return_user"))
     private User processedBy;
     
     @Column(nullable = false)
@@ -64,6 +64,8 @@ public class Return {
         FULL, PARTIAL
     }
 }
+
+
 
 
 

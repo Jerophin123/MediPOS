@@ -35,6 +35,30 @@
   gap: $space-4;
 }
 
+.btn-history {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  background: var(--color-base-200);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-base-300);
+  border-radius: $radius-xl;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  @include transition-base();
+
+  &:hover {
+    background: var(--color-base-300);
+    transform: translateY(-1px);
+  }
+
+  .btn-icon {
+    color: var(--color-text-primary);
+  }
+}
+
 .header-title {
   flex: 1;
 
@@ -73,10 +97,22 @@
   position: relative;
   overflow: hidden;
   
-  /* Glass Elevated Material */
+  /* Glass Elevated Material - only in light mode */
   @include glass-elevated;
   @include glass-fallback;
   @include glass-interactive;
+  
+  /* Dark mode override */
+  .dark-theme & {
+    background: var(--color-bg-secondary) !important;
+    background-color: var(--color-bg-secondary) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    
+    &::before {
+      display: none !important;
+    }
+  }
 }
 
 .search-form {
@@ -214,9 +250,21 @@
   position: relative;
   overflow: hidden;
   
-  /* Glass Elevated Material */
+  /* Glass Elevated Material - only in light mode */
   @include glass-elevated;
   @include glass-fallback;
+  
+  /* Dark mode override */
+  .dark-theme & {
+    background: var(--color-bg-secondary) !important;
+    background-color: var(--color-bg-secondary) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    
+    &::before {
+      display: none !important;
+    }
+  }
 
   .spinner {
     width: 40px;
@@ -265,17 +313,24 @@
   border-radius: $radius-2xl;
   overflow: hidden;
   position: relative;
+  @include animate-fade-in();
   
-  /* Glass Elevated Material */
+  /* Liquid Glass Effect - works in both light and dark mode */
   @include glass-elevated;
   @include glass-fallback;
-  @include animate-fade-in();
 }
 
 .section-header {
   padding: $space-6 $space-8;
-  border-bottom: 1px solid $color-base-200;
-  background: $color-base-50;
+  border-bottom: 1px solid var(--color-base-300);
+  background: transparent;
+  
+  /* Dark mode - ensure transparent so glass effect shows through */
+  .dark-theme & {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-bottom-color: var(--color-base-300) !important;
+  }
 }
 
 .section-header-content {
@@ -310,7 +365,15 @@
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: $space-4;
   padding: $space-6 $space-8;
-  border-bottom: 1px solid $color-base-200;
+  border-bottom: 1px solid var(--color-base-300);
+  background: transparent;
+  
+  /* Dark mode - ensure transparent so glass effect shows through */
+  .dark-theme & {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-bottom-color: var(--color-base-300) !important;
+  }
 
   .info-item {
     display: flex;
@@ -334,6 +397,13 @@
 
 .items-section {
   padding: $space-6 $space-8;
+  background: transparent;
+  
+  /* Dark mode - ensure transparent so glass effect shows through */
+  .dark-theme & {
+    background: transparent !important;
+    background-color: transparent !important;
+  }
 
   .items-title {
     font-size: $font-size-lg;
@@ -347,7 +417,12 @@
 .data-table-container {
   overflow-x: auto;
   border-radius: $radius-2xl;
-  border: 1px solid var(--color-base-200);
+  border: 1px solid var(--color-base-300);
+  
+  /* Dark mode override */
+  .dark-theme & {
+    border-color: var(--color-base-300) !important;
+  }
 }
 
 .data-table {
@@ -361,6 +436,11 @@
     position: sticky;
     top: 0;
     z-index: 10;
+    
+    /* Dark mode override */
+    .dark-theme & {
+      background: var(--color-bg-secondary) !important;
+    }
 
     th {
       padding: $space-4 $space-5;
@@ -369,7 +449,7 @@
       font-weight: $font-weight-semibold;
       color: var(--color-text-secondary);
       text-transform: none;
-      border-bottom: 2px solid $color-base-200;
+      border-bottom: 2px solid var(--color-base-300);
       white-space: nowrap;
 
       &.col-select {
@@ -390,7 +470,12 @@
   tbody {
     tr {
       @include transition-base(background-color);
-      border-bottom: 1px solid $color-base-200;
+      border-bottom: 1px solid var(--color-base-300);
+      
+      /* Dark mode override */
+      .dark-theme & {
+        border-bottom-color: var(--color-base-300) !important;
+      }
 
       &:last-child {
         border-bottom: none;
@@ -398,6 +483,11 @@
 
       &:hover {
         background: var(--color-base-50);
+        
+        /* Dark mode hover */
+        .dark-theme & {
+          background: var(--color-base-300) !important;
+        }
       }
     }
 
@@ -538,17 +628,37 @@
 /* Return Form Section */
 .return-form-section {
   padding: $space-6 $space-8;
-  border-top: 1px solid $color-base-200;
-  background: $color-base-50;
+  border-top: 1px solid var(--color-base-300);
+  background: transparent;
+  
+  /* Dark mode - ensure transparent so glass effect shows through */
+  .dark-theme & {
+    background: transparent !important;
+    background-color: transparent !important;
+    border-top-color: var(--color-base-300) !important;
+  }
 }
 
 .refund-summary {
   margin-bottom: $space-6;
   padding: $space-5;
-  background: $color-success-light;
-  border: 1px solid $color-success;
+  background: var(--color-success-light);
+  border: 1px solid var(--color-success);
   border-radius: $radius-2xl;
   box-shadow: $shadow-sm;
+  
+  /* Dark mode override - use darker success background */
+  .dark-theme & {
+    background: rgba(45, 212, 160, 0.15) !important;
+    background-color: rgba(45, 212, 160, 0.15) !important;
+    border-color: var(--color-success);
+  }
+  
+  /* Within bill-details-section in dark mode, ensure it's dark */
+  .dark-theme .bill-details-section & {
+    background: rgba(45, 212, 160, 0.15) !important;
+    background-color: rgba(45, 212, 160, 0.15) !important;
+  }
 }
 
 .summary-content {
@@ -632,7 +742,12 @@
   justify-content: flex-end;
   gap: $space-3;
   padding-top: $space-4;
-  border-top: 1px solid $color-base-200;
+  border-top: 1px solid var(--color-base-300);
+  
+  /* Dark mode override */
+  .dark-theme & {
+    border-top-color: var(--color-base-300) !important;
+  }
 }
 
 .btn-primary,
@@ -687,11 +802,36 @@
 }
 
 .btn-secondary {
-  background: $color-base-200;
+  background: var(--color-base-200);
   color: var(--color-text-primary);
+  
+  /* Dark mode override */
+  .dark-theme & {
+    background: var(--color-base-300) !important;
+    color: var(--color-text-primary) !important;
+  }
 
   &:hover {
-    background: $color-base-300;
+    background: var(--color-base-300);
+    
+    /* Dark mode hover */
+    .dark-theme & {
+      background: var(--color-base-400) !important;
+    }
+  }
+}
+
+/* Dark mode - ensure glass effect works properly */
+/* The glass effect uses CSS variables that are already set for dark mode */
+/* Child sections should be transparent to let the glass effect show through */
+.dark-theme .bill-details-section {
+  /* Glass effect is already applied via mixin, just ensure child sections are transparent */
+  .section-header,
+  .bill-info-grid,
+  .items-section,
+  .return-form-section {
+    background: transparent !important;
+    background-color: transparent !important;
   }
 }
 
@@ -699,6 +839,315 @@
 @keyframes spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* Processed Return Details Section */
+.return-details-section {
+  animation: slideUp 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: $radius-2xl;
+  overflow: hidden;
+  position: relative;
+  @include animate-fade-in();
+  
+  /* Liquid Glass Effect */
+  @include glass-elevated;
+  @include glass-fallback;
+  
+  .dark-theme & {
+    background: var(--color-bg-secondary) !important;
+    background-color: var(--color-bg-secondary) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    
+    &::before {
+      display: none !important;
+    }
+  }
+}
+
+.return-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $space-4;
+  padding: $space-6 $space-8;
+  border-bottom: 1px solid var(--color-base-300);
+  background: transparent;
+
+  .info-item {
+    display: flex;
+    flex-direction: column;
+    gap: $space-1;
+
+    &.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .info-label {
+      font-size: $font-size-xs;
+      color: var(--color-text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .info-value {
+      font-size: $font-size-base;
+      font-weight: $font-weight-medium;
+      color: var(--color-text-primary);
+
+      &.refund-amount {
+        color: $color-success;
+        font-weight: $font-weight-bold;
+        font-size: $font-size-lg;
+      }
+
+      &.return-type {
+        display: inline-block;
+        padding: $space-1 $space-3;
+        border-radius: $radius-md;
+        font-size: $font-size-xs;
+        font-weight: $font-weight-semibold;
+        text-transform: uppercase;
+
+        &.return-type-full {
+          background: rgba(239, 68, 68, 0.1);
+          color: $color-danger;
+        }
+
+        &.return-type-partial {
+          background: rgba(245, 158, 11, 0.1);
+          color: $color-warning;
+        }
+      }
+    }
+  }
+}
+
+.return-items-section {
+  padding: $space-6 $space-8;
+  background: transparent;
+
+  .dark-theme & {
+    background: transparent !important;
+  }
+}
+
+.btn-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: $radius-md;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  @include transition-base();
+
+  &:hover {
+    background: var(--color-base-200);
+    color: var(--color-text-primary);
+  }
+}
+
+/* Return History Section */
+.return-history-section {
+  animation: slideUp 400ms cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: $radius-2xl;
+  overflow: hidden;
+  position: relative;
+  @include animate-fade-in();
+  
+  /* Liquid Glass Effect */
+  @include glass-elevated;
+  @include glass-fallback;
+  
+  .dark-theme & {
+    background: var(--color-bg-secondary) !important;
+    background-color: var(--color-bg-secondary) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    
+    &::before {
+      display: none !important;
+    }
+  }
+}
+
+.history-content {
+  padding: $space-6 $space-8;
+}
+
+.history-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: $space-4;
+  margin-bottom: $space-6;
+}
+
+.stat-card {
+  padding: $space-4 $space-5;
+  background: var(--color-base-50);
+  border: 1px solid var(--color-base-200);
+  border-radius: $radius-xl;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+
+  .dark-theme & {
+    background: var(--color-base-200) !important;
+    border-color: var(--color-base-300) !important;
+  }
+
+  .stat-label {
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+  }
+
+  .stat-value {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: var(--color-text-primary);
+  }
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: $space-4;
+}
+
+.history-item {
+  padding: $space-5;
+  background: var(--color-base-50);
+  border: 1px solid var(--color-base-200);
+  border-radius: $radius-xl;
+  @include transition-base();
+
+  .dark-theme & {
+    background: var(--color-base-200) !important;
+    border-color: var(--color-base-300) !important;
+  }
+
+  &:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+  }
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $space-4;
+  padding-bottom: $space-3;
+  border-bottom: 1px solid var(--color-base-200);
+
+  .history-item-title {
+    display: flex;
+    align-items: center;
+    gap: $space-3;
+
+    .return-number {
+      font-size: $font-size-lg;
+      font-weight: $font-weight-bold;
+      color: var(--color-text-primary);
+    }
+
+    .return-type-badge {
+      padding: $space-1 $space-3;
+      border-radius: $radius-md;
+      font-size: $font-size-xs;
+      font-weight: $font-weight-semibold;
+      text-transform: uppercase;
+
+      &.return-type-full {
+        background: rgba(239, 68, 68, 0.1);
+        color: $color-danger;
+      }
+
+      &.return-type-partial {
+        background: rgba(245, 158, 11, 0.1);
+        color: $color-warning;
+      }
+    }
+  }
+
+  .return-date {
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+  }
+}
+
+.history-item-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: $space-3;
+  margin-bottom: $space-3;
+}
+
+.detail-row {
+  display: flex;
+  gap: $space-2;
+
+  .detail-label {
+    font-size: $font-size-sm;
+    color: var(--color-text-tertiary);
+    font-weight: $font-weight-medium;
+  }
+
+  .detail-value {
+    font-size: $font-size-sm;
+    color: var(--color-text-primary);
+
+    &.refund-amount {
+      color: $color-success;
+      font-weight: $font-weight-semibold;
+    }
+  }
+}
+
+.history-item-reason {
+  padding-top: $space-3;
+  border-top: 1px solid var(--color-base-200);
+  display: flex;
+  gap: $space-2;
+
+  .reason-label {
+    font-size: $font-size-sm;
+    color: var(--color-text-tertiary);
+    font-weight: $font-weight-medium;
+  }
+
+  .reason-text {
+    font-size: $font-size-sm;
+    color: var(--color-text-secondary);
+    flex: 1;
+  }
+}
+
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $space-12;
+  gap: $space-4;
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--color-base-200);
+    border-top-color: $color-primary;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  p {
+    color: var(--color-text-secondary);
+    font-size: $font-size-base;
   }
 }
 
@@ -733,5 +1182,16 @@
 
   .data-table {
     min-width: 700px;
+  }
+
+  .return-info-grid,
+  .history-item-details {
+    grid-template-columns: 1fr;
+  }
+
+  .history-item-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $space-2;
   }
 }

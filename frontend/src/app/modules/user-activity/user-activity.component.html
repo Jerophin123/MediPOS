@@ -9,16 +9,27 @@
         </h1>
         <p class="screen-subtitle">Monitor all user activities and system events</p>
       </div>
-      <button 
-        class="btn-refresh" 
-        (click)="loadAuditLogs()"
-        [disabled]="isLoading"
-        aria-label="Refresh activity logs"
-      >
-        <svg-icon name="refresh" class="refresh-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
-        <span class="spinner-mini" *ngIf="isLoading"></span>
-        <span>Refresh</span>
-      </button>
+      <div class="header-actions">
+        <button 
+          class="btn-clear" 
+          (click)="clearAllLogs()"
+          [disabled]="isLoading || auditLogs.length === 0"
+          aria-label="Clear all activity logs"
+        >
+          <svg-icon name="error" class="clear-icon" [size]="18"></svg-icon>
+          <span>Clear All</span>
+        </button>
+        <button 
+          class="btn-refresh" 
+          (click)="loadAuditLogs()"
+          [disabled]="isLoading"
+          aria-label="Refresh activity logs"
+        >
+          <svg-icon name="refresh" class="refresh-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
+          <span class="spinner-mini" *ngIf="isLoading"></span>
+          <span>Refresh</span>
+        </button>
+      </div>
     </div>
   </div>
 

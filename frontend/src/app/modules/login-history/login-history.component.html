@@ -9,16 +9,27 @@
         </h1>
         <p class="screen-subtitle">Track user login and logout activities</p>
       </div>
-      <button 
-        class="btn-refresh" 
-        (click)="loadLoginLogoutLogs()"
-        [disabled]="isLoading"
-        aria-label="Refresh login history"
-      >
-        <svg-icon name="refresh" class="refresh-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
-        <span class="spinner-mini" *ngIf="isLoading"></span>
-        <span>Refresh</span>
-      </button>
+      <div class="header-actions">
+        <button 
+          class="btn-clear" 
+          (click)="clearLoginHistory()"
+          [disabled]="isLoading || loginLogoutLogs.length === 0"
+          aria-label="Clear login history"
+        >
+          <svg-icon name="error" class="clear-icon" [size]="18"></svg-icon>
+          <span>Clear History</span>
+        </button>
+        <button 
+          class="btn-refresh" 
+          (click)="loadLoginLogoutLogs()"
+          [disabled]="isLoading"
+          aria-label="Refresh login history"
+        >
+          <svg-icon name="refresh" class="refresh-icon" [size]="18" *ngIf="!isLoading"></svg-icon>
+          <span class="spinner-mini" *ngIf="isLoading"></span>
+          <span>Refresh</span>
+        </button>
+      </div>
     </div>
   </div>
 

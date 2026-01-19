@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuditLogService, AuditLogResponse } from '../../core/services/audit-log.service';
+import { DialogService } from '../../core/services/dialog.service';
 
 @Component({
   selector: 'app-login-history',
@@ -13,7 +14,10 @@ export class LoginHistoryComponent implements OnInit {
   searchTerm = '';
   selectedType: string = 'ALL'; // ALL, LOGIN, LOGOUT
 
-  constructor(private auditLogService: AuditLogService) {}
+  constructor(
+    private auditLogService: AuditLogService,
+    private dialogService: DialogService
+  ) {}
 
   ngOnInit(): void {
     this.loadLoginLogoutLogs();
@@ -23,8 +27,9 @@ export class LoginHistoryComponent implements OnInit {
     this.isLoading = true;
     this.auditLogService.getLoginLogoutLogs().subscribe({
       next: (logs) => {
-        this.loginLogoutLogs = logs;
-        this.filteredLogs = logs;
+        // Limit to top 50 activities (backend should already limit, but adding safety check)
+        this.loginLogoutLogs = logs.slice(0, 50);
+        this.filteredLogs = this.loginLogoutLogs;
         this.isLoading = false;
       },
       error: (error) => {
@@ -81,5 +86,31 @@ export class LoginHistoryComponent implements OnInit {
     if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
     return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
   }
+
+  clearLoginHistory(): void {
+    this.dialogService.confirm(
+      'Are you sure you want to delete all login/logout history? This action cannot be undone.',
+      'Clear Login/Logout History'
+    ).then((confirmed) => {
+      if (confirmed) {
+        this.isLoading = true;
+        this.auditLogService.deleteLoginLogoutLogs().subscribe({
+          next: () => {
+            this.loginLogoutLogs = [];
+            this.filteredLogs = [];
+            this.isLoading = false;
+            this.dialogService.success('Login/logout history has been cleared successfully.');
+          },
+          error: (error) => {
+            console.error('Error clearing login history:', error);
+            this.dialogService.error('Failed to clear login history. Please try again.');
+            this.isLoading = false;
+          }
+        });
+      }
+    });
+  }
 }
+
+
 

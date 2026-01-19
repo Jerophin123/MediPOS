@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { AuditLogService, AuditLogResponse } from '../../core/services/audit-log.service';
+import { DialogService } from '../../core/services/dialog.service';
 
 @Component({
   selector: 'app-user-activity',
@@ -17,7 +18,10 @@ export class UserActivityComponent implements OnInit {
   uniqueUsers: string[] = [];
   uniqueActions: string[] = [];
 
-  constructor(private auditLogService: AuditLogService) {}
+  constructor(
+    private auditLogService: AuditLogService,
+    private dialogService: DialogService
+  ) {}
 
   ngOnInit(): void {
     this.loadAuditLogs();
@@ -27,8 +31,9 @@ export class UserActivityComponent implements OnInit {
     this.isLoading = true;
     this.auditLogService.getAllAuditLogs().subscribe({
       next: (logs) => {
-        this.auditLogs = logs;
-        this.filteredLogs = logs;
+        // Limit to top 50 activities (backend should already limit, but adding safety check)
+        this.auditLogs = logs.slice(0, 50);
+        this.filteredLogs = this.auditLogs;
         this.extractUniqueValues();
         this.isLoading = false;
       },
@@ -82,5 +87,33 @@ export class UserActivityComponent implements OnInit {
       minute: '2-digit'
     });
   }
+
+  clearAllLogs(): void {
+    this.dialogService.confirm(
+      'Are you sure you want to delete all activity logs? This action cannot be undone.',
+      'Clear All Activity Logs'
+    ).then((confirmed) => {
+      if (confirmed) {
+        this.isLoading = true;
+        this.auditLogService.deleteAllAuditLogs().subscribe({
+          next: () => {
+            this.auditLogs = [];
+            this.filteredLogs = [];
+            this.uniqueUsers = [];
+            this.uniqueActions = [];
+            this.isLoading = false;
+            this.dialogService.success('All activity logs have been cleared successfully.');
+          },
+          error: (error) => {
+            console.error('Error clearing audit logs:', error);
+            this.dialogService.error('Failed to clear activity logs. Please try again.');
+            this.isLoading = false;
+          }
+        });
+      }
+    });
+  }
 }
+
+
 

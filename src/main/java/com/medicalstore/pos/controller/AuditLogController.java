@@ -51,5 +51,21 @@ public class AuditLogController {
         List<AuditLogResponse> logs = auditLogService.getAuditLogsByUser(userId);
         return ResponseEntity.ok(logs);
     }
+    
+    @DeleteMapping("/all")
+    @Operation(summary = "Delete all audit logs", description = "Clear all user activity logs (Admin only)")
+    public ResponseEntity<Void> deleteAllAuditLogs() {
+        auditLogService.deleteAllAuditLogs();
+        return ResponseEntity.noContent().build();
+    }
+    
+    @DeleteMapping("/login-logout")
+    @Operation(summary = "Delete login/logout logs", description = "Clear all login and logout history (Admin only)")
+    public ResponseEntity<Void> deleteLoginLogoutLogs() {
+        auditLogService.deleteLoginLogoutLogs();
+        return ResponseEntity.noContent().build();
+    }
 }
+
+
 

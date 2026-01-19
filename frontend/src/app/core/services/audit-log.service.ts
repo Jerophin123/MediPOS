@@ -41,5 +41,15 @@ export class AuditLogService {
   getAuditLogsByUser(userId: number): Observable<AuditLogResponse[]> {
     return this.apiService.get<AuditLogResponse[]>(`/admin/audit/user/${userId}`);
   }
+
+  deleteAllAuditLogs(): Observable<void> {
+    return this.apiService.delete<void>('/admin/audit/all');
+  }
+
+  deleteLoginLogoutLogs(): Observable<void> {
+    return this.apiService.delete<void>('/admin/audit/login-logout');
+  }
 }
+
+
 

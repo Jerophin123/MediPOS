@@ -578,6 +578,7 @@ All default users have password: `password123`
 
 4. **Build and Run Backend**
    ```bash
+   cd Backend_DeployReady
    mvn clean install
    mvn spring-boot:run
    ```
@@ -592,7 +593,7 @@ All default users have password: `password123`
 
 1. **Install Dependencies**
    ```bash
-   cd frontend
+   cd frontend_DeployReady
    npm install
    ```
 
@@ -777,9 +778,9 @@ docker run -p 80:80 medical-store-pos-frontend
 
 ## 📞 Support
 
-For issues and questions, please contact: [jerophinstanley47@gmail.com]
+For issues and questions, please contact: [support email]
 
 ---
 
-**Last Updated**: 2026
+**Last Updated**: 2024
 

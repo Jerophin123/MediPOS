@@ -9,6 +9,14 @@
         </h1>
         <p class="screen-subtitle">Process returns and manage refunds</p>
       </div>
+      <button
+        type="button"
+        class="btn-history"
+        (click)="toggleHistoryView()"
+      >
+        <svg-icon name="reports" class="btn-icon" [size]="18"></svg-icon>
+        <span>{{ showReturnHistory ? 'Hide' : 'Show' }} History</span>
+      </button>
     </div>
   </div>
 
@@ -191,6 +199,160 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Processed Return Details -->
+  <div class="return-details-section" *ngIf="processedReturn">
+    <div class="section-header">
+      <div class="section-header-content">
+        <svg-icon name="returns" class="section-icon" [size]="24"></svg-icon>
+        <div>
+          <h2 class="section-title">Return Processed Successfully</h2>
+          <p class="section-subtitle">Return Number: {{ processedReturn.returnNumber }}</p>
+        </div>
+      </div>
+      <button
+        type="button"
+        class="btn-close"
+        (click)="clearProcessedReturn()"
+      >
+        <svg-icon name="close" [size]="20"></svg-icon>
+      </button>
+    </div>
+
+    <div class="return-info-grid">
+      <div class="info-item">
+        <span class="info-label">Return Date</span>
+        <span class="info-value">{{ formatDate(processedReturn.returnDate) }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Bill Number</span>
+        <span class="info-value">{{ processedReturn.billNumber }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Return Type</span>
+        <span class="info-value return-type" [ngClass]="'return-type-' + processedReturn.returnType.toLowerCase()">
+          {{ processedReturn.returnType }}
+        </span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Processed By</span>
+        <span class="info-value">{{ processedReturn.processedByName }}</span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Refund Amount</span>
+        <span class="info-value refund-amount">₹{{ processedReturn.refundAmount | number:'1.2-2' }}</span>
+      </div>
+      <div class="info-item full-width">
+        <span class="info-label">Reason</span>
+        <span class="info-value">{{ processedReturn.reason }}</span>
+      </div>
+    </div>
+
+    <div class="return-items-section">
+      <h3 class="items-title">Returned Items</h3>
+      <div class="data-table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Medicine</th>
+              <th>Batch Number</th>
+              <th>Quantity</th>
+              <th>Refund Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let item of processedReturn.items">
+              <td class="cell-medicine">
+                <span class="medicine-name">{{ item.medicineName }}</span>
+              </td>
+              <td class="cell-batch">
+                <span class="batch-number">{{ item.batchNumber }}</span>
+              </td>
+              <td class="cell-quantity">
+                <span class="quantity-value">{{ item.quantity }}</span>
+              </td>
+              <td class="cell-refund">
+                <span class="refund-amount">₹{{ item.refundAmount | number:'1.2-2' }}</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Return History Section -->
+  <div class="return-history-section" *ngIf="showReturnHistory">
+    <div class="section-header">
+      <div class="section-header-content">
+        <svg-icon name="reports" class="section-icon" [size]="24"></svg-icon>
+        <div>
+          <h2 class="section-title">Return History</h2>
+          <p class="section-subtitle">All processed returns</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="history-content" *ngIf="!isLoadingHistory">
+      <div class="history-stats">
+        <div class="stat-card">
+          <span class="stat-label">Total Returns</span>
+          <span class="stat-value">{{ returnHistory.length }}</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-label">Total Refunded</span>
+          <span class="stat-value">₹{{ getTotalRefunded() | number:'1.2-2' }}</span>
+        </div>
+      </div>
+
+      <div class="history-list" *ngIf="returnHistory.length > 0">
+        <div class="history-item" *ngFor="let returnItem of returnHistory">
+          <div class="history-item-header">
+            <div class="history-item-title">
+              <span class="return-number">{{ returnItem.returnNumber }}</span>
+              <span class="return-type-badge" [ngClass]="'return-type-' + returnItem.returnType.toLowerCase()">
+                {{ returnItem.returnType }}
+              </span>
+            </div>
+            <span class="return-date">{{ formatDate(returnItem.returnDate) }}</span>
+          </div>
+          <div class="history-item-details">
+            <div class="detail-row">
+              <span class="detail-label">Bill:</span>
+              <span class="detail-value">{{ returnItem.billNumber }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Refund:</span>
+              <span class="detail-value refund-amount">₹{{ returnItem.refundAmount | number:'1.2-2' }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Items:</span>
+              <span class="detail-value">{{ returnItem.items.length }} item(s)</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Processed By:</span>
+              <span class="detail-value">{{ returnItem.processedByName }}</span>
+            </div>
+          </div>
+          <div class="history-item-reason">
+            <span class="reason-label">Reason:</span>
+            <span class="reason-text">{{ returnItem.reason }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state-card" *ngIf="returnHistory.length === 0">
+        <svg-icon name="returns" class="empty-icon" [size]="64"></svg-icon>
+        <h3 class="empty-title">No returns found</h3>
+        <p class="empty-message">No returns have been processed yet</p>
+      </div>
+    </div>
+
+    <div class="loading-state" *ngIf="isLoadingHistory">
+      <div class="spinner"></div>
+      <p>Loading return history...</p>
     </div>
   </div>
 </div>

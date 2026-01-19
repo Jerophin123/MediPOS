@@ -21,7 +21,7 @@ public class AuditLogService {
     
     @Transactional(readOnly = true)
     public List<AuditLogResponse> getAllAuditLogs() {
-        List<AuditLog> logs = auditLogRepository.findAllByOrderByTimestampDesc();
+        List<AuditLog> logs = auditLogRepository.findTop50ByOrderByTimestampDesc();
         return logs.stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
@@ -32,16 +32,17 @@ public class AuditLogService {
         LocalDateTime startDate = LocalDateTime.now().minusDays(30); // Last 30 days
         LocalDateTime endDate = LocalDateTime.now();
         
-        List<AuditLog> loginLogs = auditLogRepository.findByActionAndDateRange(
-                AuditLog.ActionType.USER_LOGIN, startDate, endDate);
-        List<AuditLog> logoutLogs = auditLogRepository.findByActionAndDateRange(
-                AuditLog.ActionType.USER_LOGOUT, startDate, endDate);
+        List<AuditLog> loginLogs = auditLogRepository.findTop50ByActionAndDateRange(
+                AuditLog.ActionType.USER_LOGIN.name(), startDate, endDate);
+        List<AuditLog> logoutLogs = auditLogRepository.findTop50ByActionAndDateRange(
+                AuditLog.ActionType.USER_LOGOUT.name(), startDate, endDate);
         
-        List<AuditLog> allLogs = loginLogs;
+        List<AuditLog> allLogs = new java.util.ArrayList<>(loginLogs);
         allLogs.addAll(logoutLogs);
         
         return allLogs.stream()
                 .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .limit(50)
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }
@@ -64,6 +65,27 @@ public class AuditLogService {
                 .collect(Collectors.toList());
     }
     
+    @Transactional
+    public void deleteAllAuditLogs() {
+        auditLogRepository.deleteAll();
+    }
+    
+    @Transactional
+    public void deleteLoginLogoutLogs() {
+        LocalDateTime startDate = LocalDateTime.now().minusDays(30);
+        LocalDateTime endDate = LocalDateTime.now();
+        
+        List<AuditLog> loginLogs = auditLogRepository.findByActionAndDateRange(
+                AuditLog.ActionType.USER_LOGIN, startDate, endDate);
+        List<AuditLog> logoutLogs = auditLogRepository.findByActionAndDateRange(
+                AuditLog.ActionType.USER_LOGOUT, startDate, endDate);
+        
+        List<AuditLog> allLogs = new java.util.ArrayList<>(loginLogs);
+        allLogs.addAll(logoutLogs);
+        
+        auditLogRepository.deleteAll(allLogs);
+    }
+    
     private AuditLogResponse mapToResponse(AuditLog log) {
         return AuditLogResponse.builder()
                 .id(log.getId())
@@ -82,4 +104,6 @@ public class AuditLogService {
                 .build();
     }
 }
+
+
 
