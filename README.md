@@ -578,7 +578,6 @@ All default users have password: `password123`
 
 4. **Build and Run Backend**
    ```bash
-   cd Backend_DeployReady
    mvn clean install
    mvn spring-boot:run
    ```
@@ -593,7 +592,7 @@ All default users have password: `password123`
 
 1. **Install Dependencies**
    ```bash
-   cd frontend_DeployReady
+   cd frontend
    npm install
    ```
 
