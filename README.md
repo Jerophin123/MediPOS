@@ -10,6 +10,7 @@
 - [Role-Based Access Control](#role-based-access-control)
 - [Setup Instructions](#setup-instructions)
 - [Deployment](#deployment)
+- [Development](#development)
 
 ---
 
@@ -18,14 +19,17 @@
 A production-grade Point of Sale (POS) system designed specifically for medical stores and pharmacies. The system provides comprehensive functionality for billing, inventory management, medicine tracking, returns processing, and detailed reporting with GST compliance.
 
 ### Key Features
-- **Billing & POS**: Real-time bill generation with GST calculation
-- **Inventory Management**: Batch tracking with expiry date monitoring
-- **Medicine Management**: Complete medicine catalog with barcode support
-- **Returns Processing**: Customer return and refund management
+- **Billing & POS**: Real-time bill generation with GST calculation and PDF export
+- **Inventory Management**: Batch tracking with expiry date monitoring and low stock alerts
+- **Medicine Management**: Complete medicine catalog with barcode support (GTIN/EAN)
+- **Returns Processing**: Customer return and refund management with audit trail
 - **Reporting**: Sales reports, GST reports, and cashier performance analytics
-- **Audit Logging**: Complete audit trail of all system activities
+- **Audit Logging**: Complete audit trail of all system activities with IP tracking
 - **User Management**: Role-based access control with multiple user roles
-- **PDF Generation**: Automatic bill PDF generation
+- **PDF Generation**: Automatic bill PDF generation using iText 7
+- **Barcode Scanning**: Support for barcode scanning in frontend using ZXing library
+- **Login History**: Track user login/logout events
+- **User Activity**: Monitor all user actions across the system
 
 ---
 
@@ -36,21 +40,32 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
 - **Language**: Java 17
 - **Database**: PostgreSQL
 - **ORM**: Spring Data JPA / Hibernate
-- **Security**: Spring Security with JWT
-- **API Documentation**: Swagger/OpenAPI 3
-- **PDF Generation**: iText 7
-- **Build Tool**: Maven
+- **Security**: Spring Security with JWT (io.jsonwebtoken 0.12.3)
+- **API Documentation**: Swagger/OpenAPI 3 (springdoc-openapi 2.3.0)
+- **PDF Generation**: iText 7 (8.0.2)
+- **Build Tool**: Maven 3.9+
+- **Utilities**: Lombok, MapStruct 1.5.5
+- **Validation**: Jakarta Validation
 
 ### Frontend
 - **Framework**: Angular 17
 - **Language**: TypeScript 5.2
 - **UI Library**: Bootstrap 5.3
-- **Barcode Scanner**: ZXing Library
-- **Build Tool**: Angular CLI
+- **Barcode Scanner**: ZXing Library 0.21.3
+- **Build Tool**: Angular CLI 17
+- **State Management**: RxJS 7.8
 
 ### Database
-- **RDBMS**: PostgreSQL
+- **RDBMS**: PostgreSQL 12+
 - **Connection Pool**: HikariCP
+- **Migration**: SQL scripts in `DBQ/` directory
+
+### Deployment Platforms
+- Docker
+- Railway (railway.json)
+- Render (render.yaml)
+- Vercel (vercel.json)
+- Heroku (Procfile)
 
 ---
 
@@ -71,6 +86,7 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
 ┌───────────────────────────▼─────────────────────────────────────┐
 │                      API GATEWAY LAYER                          │
 │              (Spring Security + JWT Filter)                     │
+│         JwtAuthenticationFilter + SecurityConfig                │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
 ┌───────────────────────────▼─────────────────────────────────────┐
@@ -105,14 +121,15 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
 
 ### Request Flow
 
-1. **Client Request** → Angular frontend makes HTTP request
-2. **JWT Authentication** → Spring Security validates JWT token
-3. **Role Authorization** → RoleGuard checks user permissions
-4. **Controller** → REST controller receives request
-5. **Service Layer** → Business logic processing
-6. **Repository** → Data access via JPA
-7. **Database** → PostgreSQL executes query
-8. **Response** → JSON response sent back to client
+1. **Client Request** → Angular frontend makes HTTP request via API service
+2. **JWT Authentication** → JwtAuthenticationFilter validates JWT token
+3. **Role Authorization** → SecurityConfig checks user permissions via @PreAuthorize
+4. **Controller** → REST controller receives request (@RestController)
+5. **Service Layer** → Business logic processing with transaction management
+6. **Repository** → Data access via Spring Data JPA
+7. **Database** → PostgreSQL executes query with connection pooling
+8. **Audit Logging** → AuditService logs critical operations
+9. **Response** → JSON response sent back to client
 
 ---
 
@@ -126,13 +143,13 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
 │  ┌─────────────┬──────────────────────────────────────────┐    │
 │  │ id (PK)     │ BIGSERIAL                                │    │
 │  │ username    │ VARCHAR(50) UNIQUE                       │    │
-│  │ password    │ VARCHAR(255)                              │    │
-│  │ email       │ VARCHAR(100) UNIQUE                       │    │
-│  │ full_name   │ VARCHAR(100)                              │    │
-│  │ role        │ VARCHAR(20) [ADMIN, CASHIER, etc.]       │    │
-│  │ active      │ BOOLEAN                                    │    │
-│  │ created_at  │ TIMESTAMP                                  │    │
-│  │ updated_at  │ TIMESTAMP                                  │    │
+│  │ password    │ VARCHAR(255) [BCrypt]                    │    │
+│  │ email       │ VARCHAR(100) UNIQUE                      │    │
+│  │ full_name   │ VARCHAR(100)                             │    │
+│  │ role        │ VARCHAR(20) [ADMIN, CASHIER, etc.]      │    │
+│  │ active      │ BOOLEAN                                   │    │
+│  │ created_at  │ TIMESTAMP                                 │    │
+│  │ updated_at  │ TIMESTAMP                                 │    │
 │  └─────────────┴──────────────────────────────────────────┘    │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -142,17 +159,17 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
 │                        MEDICINES                                │
 │  ┌─────────────┬──────────────────────────────────────────┐    │
 │  │ id (PK)     │ BIGSERIAL                                │    │
-│  │ name        │ VARCHAR(200)                              │    │
+│  │ name        │ VARCHAR(200)                             │    │
 │  │ manufacturer│ VARCHAR(200)                              │    │
-│  │ category    │ VARCHAR(100)                              │    │
+│  │ category    │ VARCHAR(100)                             │    │
 │  │ barcode     │ VARCHAR(50) [GTIN/EAN]                   │    │
 │  │ hsn_code    │ VARCHAR(20) UNIQUE                       │    │
-│  │ gst_percent │ NUMERIC(5,2)                               │    │
-│  │ presc_req   │ BOOLEAN                                    │    │
-│  │ status      │ VARCHAR(20) [ACTIVE, DISCONTINUED]       │    │
+│  │ gst_percent │ NUMERIC(5,2)                              │    │
+│  │ presc_req   │ BOOLEAN                                   │    │
+│  │ status      │ VARCHAR(20) [ACTIVE, DISCONTINUED]      │    │
 │  │ version     │ BIGINT [Optimistic Locking]               │    │
-│  │ created_at  │ TIMESTAMP                                  │    │
-│  │ updated_at  │ TIMESTAMP                                  │    │
+│  │ created_at  │ TIMESTAMP                                 │    │
+│  │ updated_at  │ TIMESTAMP                                 │    │
 │  └─────────────┴──────────────────────────────────────────┘    │
 └───────────────────────────┬─────────────────────────────────────┘
                             │
@@ -228,7 +245,7 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
                             │  │ return_date     │  │
                             │  │ refund_amount   │  │
                             │  │ reason          │  │
-                            │  │ return_type     │  │
+                            │  │ return_type      │  │
                             │  │ created_at      │  │
                             │  └─────────────────┘  │
                             └───────────┬───────────┘
@@ -273,6 +290,7 @@ Stores all system users with authentication and authorization information.
 - **Unique Constraints**: `username`, `email`
 - **Indexes**: `username`, `email`
 - **Relationships**: Referenced by `bills.cashier_id`, `returns.processedBy_id`, `audit_logs.user_id`
+- **Security**: Passwords stored as BCrypt hashes
 
 #### 2. **medicines**
 Master catalog of all medicines/products in the system.
@@ -358,8 +376,9 @@ System-wide audit trail.
    - `medicines.barcode`: GTIN/EAN (product identifier, not unique per unit)
    - `stock_barcodes.barcode`: Serial numbers (unique per unit, optional)
 3. **Soft Deletes**: Bills support cancellation via `cancelled` flag instead of hard deletion
-4. **Audit Trail**: All critical operations are logged in `audit_logs` with before/after values
+4. **Audit Trail**: All critical operations are logged in `audit_logs` with before/after values and IP addresses
 5. **Indexing Strategy**: Comprehensive indexes on foreign keys, search fields, and date columns for performance
+6. **Connection Pooling**: HikariCP configured for optimal database connection management
 
 ---
 
@@ -386,6 +405,7 @@ http://localhost:8080/api
 | GET | `/api/cashier/bills/number/{billNumber}` | Get bill by bill number | CASHIER, ADMIN |
 | GET | `/api/cashier/bills` | Get all bills (purchase history) | CASHIER, ADMIN |
 | POST | `/api/cashier/bills/{id}/cancel` | Cancel bill | CASHIER, ADMIN |
+| GET | `/api/cashier/bills/{id}/pdf` | Download bill PDF | CASHIER, ADMIN |
 
 ### Medicine Management Endpoints (`/pharmacist/medicines`)
 
@@ -423,6 +443,7 @@ http://localhost:8080/api
 | GET | `/api/admin/reports/sales?startDate={date}&endDate={date}` | Sales report | ANALYST, MANAGER, ADMIN |
 | GET | `/api/admin/reports/gst?startDate={date}&endDate={date}` | GST report | ANALYST, MANAGER, ADMIN |
 | GET | `/api/admin/reports/cashier/{cashierId}?startDate={date}&endDate={date}` | Cashier performance | ANALYST, MANAGER, ADMIN |
+| GET | `/api/admin/reports/stock` | Stock report | ANALYST, MANAGER, ADMIN |
 
 ### User Management Endpoints (`/admin/users`)
 
@@ -433,6 +454,7 @@ http://localhost:8080/api
 | POST | `/api/admin/users` | Create user | ADMIN |
 | PUT | `/api/admin/users/{id}` | Update user | ADMIN |
 | PATCH | `/api/admin/users/{id}/status` | Update user status | ADMIN |
+| POST | `/api/admin/users/{id}/change-password` | Change user password | ADMIN |
 
 ### Audit Logs Endpoints (`/admin/audit-logs`)
 
@@ -460,14 +482,26 @@ frontend/
 │   │   │   ├── unauthorized/       # Unauthorized access component
 │   │   │   ├── auth.guard.ts        # Authentication guard
 │   │   │   ├── role.guard.ts        # Role-based access guard
-│   │   │   └── token.interceptor.ts # JWT token interceptor
+│   │   │   ├── token.interceptor.ts # JWT token interceptor
+│   │   │   └── auth.service.ts      # Authentication service
 │   │   │
 │   │   ├── core/                    # Core shared components
 │   │   │   ├── components/          # Reusable components
+│   │   │   │   ├── app-shell/       # Main app shell
+│   │   │   │   ├── dialog/          # Dialog component
+│   │   │   │   └── svg-icon/        # SVG icon component
 │   │   │   ├── constants/           # API endpoints
 │   │   │   ├── models/              # TypeScript models
 │   │   │   ├── pipes/               # Custom pipes
 │   │   │   └── services/            # Core services
+│   │   │       ├── api.service.ts   # Base API service
+│   │   │       ├── auth.service.ts  # Auth service
+│   │   │       ├── billing.service.ts
+│   │   │       ├── inventory.service.ts
+│   │   │       ├── report.service.ts
+│   │   │       ├── return.service.ts
+│   │   │       ├── user.service.ts
+│   │   │       └── audit-log.service.ts
 │   │   │
 │   │   └── modules/                 # Feature modules
 │   │       ├── billing/             # Billing/POS module
@@ -529,11 +563,13 @@ All default users have password: `password123`
 ### Security Features
 
 1. **JWT Authentication**: Token-based authentication with 24-hour expiration
-2. **Password Encryption**: BCrypt hashing for all passwords
-3. **Role-Based Authorization**: Route and API-level access control
-4. **Audit Logging**: All critical operations are logged
+2. **Password Encryption**: BCrypt hashing for all passwords (10 rounds)
+3. **Role-Based Authorization**: Route and API-level access control via @PreAuthorize
+4. **Audit Logging**: All critical operations are logged with IP addresses
 5. **Token Interceptor**: Automatic token injection in HTTP requests
-6. **Route Guards**: Frontend route protection based on roles
+6. **Route Guards**: Frontend route protection based on roles (AuthGuard + RoleGuard)
+7. **CORS Configuration**: Configurable CORS settings for cross-origin requests
+8. **Security Headers**: Spring Security default security headers enabled
 
 ---
 
@@ -545,14 +581,14 @@ All default users have password: `password123`
 - **Node.js**: 18.x or higher
 - **PostgreSQL**: 12.x or higher
 - **Maven**: 3.6+ (optional, wrapper included)
-- **Angular CLI**: 17.x
+- **Angular CLI**: 17.x (install via `npm install -g @angular/cli@17`)
 
 ### Backend Setup
 
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd POS
+   cd MediPOS
    ```
 
 2. **Configure Database**
@@ -560,7 +596,7 @@ All default users have password: `password123`
      ```sql
      CREATE DATABASE medical_store_pos;
      ```
-   - Update `Backend_DeployReady/src/main/resources/application.yml`:
+   - Update `src/main/resources/application.yml`:
      ```yaml
      spring:
        datasource:
@@ -578,7 +614,6 @@ All default users have password: `password123`
 
 4. **Build and Run Backend**
    ```bash
-   cd Backend_DeployReady
    mvn clean install
    mvn spring-boot:run
    ```
@@ -593,7 +628,7 @@ All default users have password: `password123`
 
 1. **Install Dependencies**
    ```bash
-   cd frontend_DeployReady
+   cd frontend
    npm install
    ```
 
@@ -619,6 +654,8 @@ All default users have password: `password123`
    ```bash
    npm run build
    ```
+   
+   Output will be in `dist/medical-store-pos/`
 
 ### Environment Variables
 
@@ -638,7 +675,7 @@ JWT_EXPIRATION: 86400000  # 24 hours in milliseconds
 PORT: 8080
 
 # Hibernate
-DDL_AUTO: update  # or 'none' for production
+DDL_AUTO: validate  # or 'none' for production
 SHOW_SQL: false
 ```
 
@@ -659,53 +696,169 @@ export const environment = {
 
 #### Option 1: Docker
 ```bash
-cd Backend_DeployReady
 docker build -t medical-store-pos-backend .
 docker run -p 8080:8080 \
   -e DATABASE_URL=jdbc:postgresql://host:5432/db \
   -e DATABASE_USERNAME=user \
   -e DATABASE_PASSWORD=pass \
+  -e JWT_SECRET=your-secret-key \
   medical-store-pos-backend
 ```
 
 #### Option 2: JAR File
 ```bash
-cd Backend_DeployReady
 mvn clean package
 java -jar target/pos-backend-1.0.0.jar
 ```
 
-#### Option 3: Railway/Render
-- Use `railway.json` or `render.yaml` configuration files
-- Set environment variables in platform dashboard
+#### Option 3: Railway
+- Use `railway.json` configuration file
+- Set environment variables in Railway dashboard
 - Deploy from Git repository
+- Railway will automatically detect Java and build
+
+#### Option 4: Render
+- Use `render.yaml` configuration file
+- Set environment variables in Render dashboard
+- Deploy from Git repository
+
+#### Option 5: Heroku
+- Use `Procfile` for process definition
+- Set environment variables in Heroku dashboard
+- Deploy using Git or Heroku CLI
 
 ### Frontend Deployment
 
 #### Option 1: Static Hosting (Vercel/Netlify)
 ```bash
-cd frontend_DeployReady
+cd frontend
 npm run build
-# Deploy dist/ folder to hosting platform
+# Deploy dist/medical-store-pos/ folder to hosting platform
 ```
 
-#### Option 2: Docker
+#### Option 2: Vercel
+- Use `vercel.json` configuration file
+- Connect Git repository
+- Vercel will automatically build and deploy
+
+#### Option 3: Docker
 ```bash
-cd frontend_DeployReady
+cd frontend
+# Create Dockerfile for Angular app
 docker build -t medical-store-pos-frontend .
 docker run -p 80:80 medical-store-pos-frontend
 ```
 
 ### Production Checklist
 
-- [ ] Set `DDL_AUTO=none` in production
-- [ ] Use strong `JWT_SECRET` (minimum 256 bits)
+- [ ] Set `DDL_AUTO=validate` or `none` in production
+- [ ] Use strong `JWT_SECRET` (minimum 256 bits, random)
 - [ ] Configure HTTPS/TLS
 - [ ] Set up database backups
 - [ ] Configure CORS for production domain
 - [ ] Enable production logging
 - [ ] Set up monitoring and alerts
 - [ ] Review and harden security settings
+- [ ] Update frontend `environment.prod.ts` with production API URL
+- [ ] Test all critical workflows in production environment
+
+---
+
+## 💻 Development
+
+### Project Structure
+
+```
+MediPOS/
+├── DBQ/                          # Database scripts
+│   ├── create_all_tables.sql     # Schema creation
+│   ├── create_all_users.sql      # Default users
+│   └── ...                       # Migration/fix scripts
+├── frontend/                     # Angular frontend
+│   ├── src/
+│   │   ├── app/                  # Application code
+│   │   ├── environments/        # Environment configs
+│   │   └── styles/               # Global styles
+│   ├── angular.json              # Angular config
+│   └── package.json              # Dependencies
+├── src/                          # Java backend
+│   └── main/
+│       ├── java/
+│       │   └── com/medicalstore/pos/
+│       │       ├── config/       # Configuration classes
+│       │       ├── controller/   # REST controllers
+│       │       ├── dto/          # Data Transfer Objects
+│       │       ├── entity/       # JPA entities
+│       │       ├── exception/    # Exception handlers
+│       │       ├── repository/   # JPA repositories
+│       │       ├── security/     # Security config
+│       │       └── service/      # Business logic
+│       └── resources/
+│           └── application.yml   # Application config
+├── pom.xml                       # Maven config
+├── Dockerfile                    # Docker config
+├── Procfile                      # Heroku config
+├── railway.json                  # Railway config
+├── render.yaml                   # Render config
+└── vercel.json                   # Vercel config
+```
+
+### Building the Project
+
+#### Backend
+```bash
+# Clean and build
+mvn clean install
+
+# Run tests
+mvn test
+
+# Run application
+mvn spring-boot:run
+
+# Build JAR
+mvn clean package
+```
+
+#### Frontend
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Development server
+npm start
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
+
+# Lint code
+npm run lint
+```
+
+### Database Migrations
+
+Database schema is managed via SQL scripts in the `DBQ/` directory:
+
+1. **Initial Setup**: Run `create_all_tables.sql` and `create_all_users.sql`
+2. **Migrations**: Additional scripts for schema updates
+3. **Fixes**: Scripts for data fixes and constraint updates
+
+### Code Style
+
+- **Backend**: Follow Java naming conventions, use Lombok for boilerplate reduction
+- **Frontend**: Follow Angular style guide, use TypeScript strict mode
+- **Database**: Use snake_case for table and column names
+
+### Testing
+
+- **Backend**: JUnit tests with Spring Boot Test
+- **Frontend**: Angular testing utilities (Jasmine/Karma)
+- **Integration**: Test API endpoints via Swagger UI or Postman
 
 ---
 
@@ -720,8 +873,10 @@ docker run -p 80:80 medical-store-pos-frontend
 | medicines | idx_medicine_name | name | Search by name |
 | medicines | idx_medicine_hsn | hsn_code | HSN code lookup |
 | medicines | idx_medicine_barcode | barcode | Barcode scanning |
+| medicines | idx_medicine_status | status | Status filtering |
 | batches | idx_batch_medicine | medicine_id | Medicine batch lookup |
 | batches | idx_batch_expiry | expiry_date | Expiry date queries |
+| batches | idx_batch_number | batch_number | Batch number lookup |
 | batches | idx_batch_medicine_expiry | medicine_id, expiry_date | Composite query optimization |
 | bills | idx_bill_number | bill_number | Bill lookup |
 | bills | idx_bill_date | bill_date | Date range queries |
@@ -736,51 +891,96 @@ docker run -p 80:80 medical-store-pos-frontend
 
 ### 1. Optimistic Locking
 - Prevents concurrent update conflicts
-- Uses `@Version` annotation on `medicines` and `batches`
+- Uses `@Version` annotation on `medicines` and `batches` entities
 - Throws `OptimisticLockException` on conflict
+- Frontend handles conflicts gracefully
 
 ### 2. Batch Expiry Management
-- Automatic expiry detection via `Batch.isExpired()`
+- Automatic expiry detection via `Batch.isExpired()` method
 - Low stock alerts via threshold queries
-- FEFO (First Expired First Out) support
+- FEFO (First Expired First Out) support in batch selection
+- Expiry date validation on batch creation
 
 ### 3. GST Calculation
-- Per-item GST calculation
-- Total GST aggregation
+- Per-item GST calculation based on `gst_percentage`
+- Total GST aggregation across all items
 - GST reports for tax compliance
+- HSN code tracking for each medicine
 
 ### 4. PDF Bill Generation
 - Automatic PDF generation using iText 7
 - Includes all bill details, items, and payment info
-- Downloadable bill PDFs
+- Downloadable bill PDFs via `/api/cashier/bills/{id}/pdf`
+- Professional bill formatting
 
 ### 5. Audit Trail
 - Comprehensive logging of:
-  - User actions
-  - Entity changes (before/after values)
+  - User actions (CREATE, UPDATE, DELETE)
+  - Entity changes (before/after values as JSON)
   - IP addresses
   - Timestamps
 - Immutable audit log records
+- Queryable by user, action, or date range
+
+### 6. Barcode Support
+- Product-level barcodes (GTIN/EAN) in medicines table
+- Optional serial number tracking via stock_barcodes table
+- Frontend barcode scanning using ZXing library
+- Barcode search functionality
+
+### 7. Returns Processing
+- Return items linked to original bill
+- Automatic stock restoration on return
+- Refund amount calculation
+- Return type tracking (FULL, PARTIAL)
+
+### 8. Reporting
+- Sales reports with date range filtering
+- GST reports for tax compliance
+- Cashier performance reports
+- Stock reports with expiry and low stock alerts
 
 ---
 
-## 📝 License
+## 🐛 Troubleshooting
 
-[Specify your license here]
+### Common Issues
+
+1. **Database Connection Error**
+   - Verify PostgreSQL is running
+   - Check database credentials in `application.yml`
+   - Ensure database exists
+
+2. **JWT Token Expired**
+   - Token expires after 24 hours
+   - Re-login to get new token
+   - Check `JWT_EXPIRATION` setting
+
+3. **CORS Errors**
+   - Configure CORS in `SecurityConfig`
+   - Ensure frontend URL is whitelisted
+   - Check browser console for specific errors
+
+4. **Optimistic Locking Exception**
+   - Occurs when concurrent updates happen
+   - Refresh data and retry operation
+   - Consider implementing retry logic
+
+5. **Build Errors**
+   - Clean and rebuild: `mvn clean install`
+   - Check Java version (must be 17+)
+   - Verify all dependencies are downloaded
 
 ---
 
-## 👥 Contributors
 
-[Add contributor information]
 
 ---
 
 ## 📞 Support
 
-For issues and questions, please contact: [support email]
+For issues and questions, please contact: [jerophinstanley47@gmail.com]
 
 ---
 
-**Last Updated**: 2024
-
+**Last Updated**: 2026
