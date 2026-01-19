@@ -1,5 +1,12 @@
 # Medical Store POS System
 
+## 🎥 Project Demo Video
+
+[![MediPOS Demo Video](https://img.youtube.com/vi/pzBrswZ8kcM/maxresdefault.jpg)](https://youtu.be/pzBrswZ8kcM)
+
+---
+
+
 ## 📋 Table of Contents
 - [Overview](#overview)
 - [Technology Stack](#technology-stack)
