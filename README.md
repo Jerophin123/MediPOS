@@ -778,9 +778,9 @@ docker run -p 80:80 medical-store-pos-frontend
 
 ## 📞 Support
 
-For issues and questions, please contact: [support email]
+For issues and questions, please contact: [jerophinstanley47@gmail.com]
 
 ---
 
-**Last Updated**: 2024
+**Last Updated**: 2026
 
