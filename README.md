@@ -8,24 +8,69 @@
 
 
 ## 📋 Table of Contents
-- [Overview](#overview)
+- [Introduction](#introduction)
+- [Architecture Overview](#architecture-overview)
+- [Database ER Diagram](#database-er-diagram)
+- [Features](#features)
 - [Technology Stack](#technology-stack)
-- [System Architecture](#system-architecture)
-- [Database Schema](#database-schema)
-- [API Endpoints](#api-endpoints)
+- [How to Run](#how-to-run)
+- [API Documentation](#api-documentation)
 - [Frontend Modules](#frontend-modules)
 - [Role-Based Access Control](#role-based-access-control)
-- [Setup Instructions](#setup-instructions)
 - [Deployment](#deployment)
 - [Development](#development)
 
 ---
 
-## 🎯 Overview
+## 📌 Introduction
 
 A production-grade Point of Sale (POS) system designed specifically for medical stores and pharmacies. The system provides comprehensive functionality for billing, inventory management, medicine tracking, returns processing, and detailed reporting with GST compliance.
 
-### Key Features
+---
+
+## 📌 Architecture Overview
+
+The system follows a layered architecture pattern with clear separation of concerns:
+
+![Medical Store POS System Architecture](Diagrams/System-Archietecture.png)
+
+### Request Flow
+
+1. **Client Request** → Angular frontend makes HTTP request via API service
+2. **JWT Authentication** → JwtAuthenticationFilter validates JWT token
+3. **Role Authorization** → SecurityConfig checks user permissions via @PreAuthorize
+4. **Controller** → REST controller receives request (@RestController)
+5. **Service Layer** → Business logic processing with transaction management
+6. **Repository** → Data access via Spring Data JPA
+7. **Database** → PostgreSQL executes query with connection pooling
+8. **Audit Logging** → AuditService logs critical operations
+9. **Response** → JSON response sent back to client
+
+---
+
+## 📌 Database ER Diagram
+
+The database schema consists of 10 core tables with well-defined relationships:
+
+![Medical Store POS ER-Model](Diagrams/ER.png)
+
+### Core Entities
+- **users**: System users with role-based access
+- **medicines**: Medicine catalog with HSN codes and GST information
+- **batches**: Inventory batches with expiry tracking
+- **bills**: Transaction records with GST calculation
+- **bill_items**: Line items for each bill
+- **payments**: Payment records
+- **returns**: Return transactions
+- **return_items**: Return line items
+- **stock_barcodes**: Optional serial number tracking
+- **audit_logs**: Complete audit trail
+
+---
+
+## 📌 Features
+
+### Core Functionality
 - **Billing & POS**: Real-time bill generation with GST calculation and PDF export
 - **Inventory Management**: Batch tracking with expiry date monitoring and low stock alerts
 - **Medicine Management**: Complete medicine catalog with barcode support (GTIN/EAN)
@@ -1056,7 +1101,7 @@ All default users have password: `password123`
 
 ---
 
-## 🚀 Setup Instructions
+## 📌 How to Run
 
 ### Prerequisites
 
