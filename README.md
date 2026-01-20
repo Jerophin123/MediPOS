@@ -83,6 +83,7 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
 ```
 ![Medical Store POS ER Diagram](diagrams/System-Archietecture.png)
 
+```
 
 
 
