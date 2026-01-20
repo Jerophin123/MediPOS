@@ -105,9 +105,7 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
 
 ### Entity Relationship Diagram
 
-```
 ![Medical Store POS ER-Model](Diagrams/ER.png)
-```
 
 ### Table Descriptions
 
