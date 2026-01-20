@@ -207,90 +207,748 @@ System-wide audit trail.
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API Documentation
 
 ### Base URL
 ```
 http://localhost:8080/api
 ```
 
-### Authentication Endpoints
+### Authentication
 
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| POST | `/auth/login` | User login (returns JWT token) | No |
-| POST | `/auth/logout` | User logout | Yes |
+All API endpoints (except `/auth/login`) require JWT authentication. Include the token in the Authorization header:
 
-### Billing Endpoints (`/cashier/bills`)
+```
+Authorization: Bearer <your-jwt-token>
+```
 
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| POST | `/api/cashier/bills` | Create new bill | CASHIER, ADMIN |
-| GET | `/api/cashier/bills/{id}` | Get bill by ID | CASHIER, ADMIN |
-| GET | `/api/cashier/bills/number/{billNumber}` | Get bill by bill number | CASHIER, ADMIN |
-| GET | `/api/cashier/bills` | Get all bills (purchase history) | CASHIER, ADMIN |
-| POST | `/api/cashier/bills/{id}/cancel` | Cancel bill | CASHIER, ADMIN |
-| GET | `/api/cashier/bills/{id}/pdf` | Download bill PDF | CASHIER, ADMIN |
-
-### Medicine Management Endpoints (`/pharmacist/medicines`)
-
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| POST | `/api/pharmacist/medicines` | Create medicine | STOCK_KEEPER, ADMIN |
-| GET | `/api/pharmacist/medicines/{id}` | Get medicine by ID | STOCK_KEEPER, ADMIN |
-| GET | `/api/pharmacist/medicines` | Get all medicines | STOCK_KEEPER, ADMIN |
-| GET | `/api/pharmacist/medicines/search?name={name}` | Search medicines | STOCK_KEEPER, ADMIN |
-| GET | `/api/pharmacist/medicines/barcode/{barcode}` | Get medicine by barcode | STOCK_KEEPER, ADMIN |
-| PUT | `/api/pharmacist/medicines/{id}` | Update medicine | STOCK_KEEPER, ADMIN |
-| PATCH | `/api/pharmacist/medicines/{id}/status?status={status}` | Update medicine status | STOCK_KEEPER, ADMIN |
-
-### Batch Management Endpoints (`/pharmacist/batches`)
-
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| POST | `/api/pharmacist/batches` | Create batch | STOCK_KEEPER, ADMIN |
-| GET | `/api/pharmacist/batches/medicine/{medicineId}` | Get batches for medicine | STOCK_KEEPER, ADMIN |
-| GET | `/api/pharmacist/batches/expired` | Get expired batches | STOCK_KEEPER, ADMIN |
-| GET | `/api/pharmacist/batches/low-stock?threshold={threshold}` | Get low stock batches | STOCK_KEEPER, ADMIN |
-| PUT | `/api/pharmacist/batches/{id}` | Update batch | STOCK_KEEPER, ADMIN |
-| PATCH | `/api/pharmacist/batches/{id}/stock` | Update stock quantity | STOCK_KEEPER, ADMIN |
-
-### Returns Endpoints (`/cashier/returns`)
-
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| POST | `/api/cashier/returns` | Process return | CUSTOMER_SUPPORT, ADMIN |
-
-### Reports Endpoints (`/admin/reports`)
-
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| GET | `/api/admin/reports/sales?startDate={date}&endDate={date}` | Sales report | ANALYST, MANAGER, ADMIN |
-| GET | `/api/admin/reports/gst?startDate={date}&endDate={date}` | GST report | ANALYST, MANAGER, ADMIN |
-| GET | `/api/admin/reports/cashier/{cashierId}?startDate={date}&endDate={date}` | Cashier performance | ANALYST, MANAGER, ADMIN |
-| GET | `/api/admin/reports/stock` | Stock report | ANALYST, MANAGER, ADMIN |
-
-### User Management Endpoints (`/admin/users`)
-
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| GET | `/api/admin/users` | Get all users | ADMIN |
-| GET | `/api/admin/users/{id}` | Get user by ID | ADMIN |
-| POST | `/api/admin/users` | Create user | ADMIN |
-| PUT | `/api/admin/users/{id}` | Update user | ADMIN |
-| PATCH | `/api/admin/users/{id}/status` | Update user status | ADMIN |
-| POST | `/api/admin/users/{id}/change-password` | Change user password | ADMIN |
-
-### Audit Logs Endpoints (`/admin/audit-logs`)
-
-| Method | Endpoint | Description | Roles |
-|--------|----------|-------------|-------|
-| GET | `/api/admin/audit-logs` | Get audit logs | ADMIN |
-| GET | `/api/admin/audit-logs/user/{userId}` | Get logs by user | ADMIN |
-
-### API Documentation
+### API Documentation Tools
 - **Swagger UI**: `http://localhost:8080/swagger-ui.html`
 - **OpenAPI JSON**: `http://localhost:8080/v3/api-docs`
+
+---
+
+### Authentication Endpoints
+
+#### POST `/auth/login`
+User login and JWT token generation.
+
+**Request Body:**
+```json
+{
+  "username": "cashier",
+  "password": "password123"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "type": "Bearer",
+  "userId": 2,
+  "username": "cashier",
+  "fullName": "Cashier User",
+  "email": "cashier@medicalstore.com",
+  "role": "CASHIER"
+}
+```
+
+**cURL Example:**
+```bash
+curl -X POST http://localhost:8080/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"cashier","password":"password123"}'
+```
+
+**Error Responses:**
+- `401 Unauthorized`: Invalid credentials
+- `400 Bad Request`: Missing or invalid request body
+
+---
+
+#### POST `/auth/logout`
+User logout (logs the event).
+
+**Headers:**
+```
+Authorization: Bearer <token>
+```
+
+**Response (200 OK):** Empty body
+
+---
+
+### Billing Endpoints
+
+#### POST `/cashier/bills`
+Create a new bill with items and payments.
+
+**Headers:**
+```
+Authorization: Bearer <token>
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "customerName": "John Doe",
+  "customerPhone": "9876543210",
+  "items": [
+    {
+      "medicineId": 1,
+      "quantity": 2
+    },
+    {
+      "barcode": "8901234567890",
+      "quantity": 1
+    }
+  ],
+  "payments": [
+    {
+      "mode": "CASH",
+      "amount": 500.00,
+      "paymentReference": "CASH-001"
+    }
+  ]
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "id": 1,
+  "billNumber": "BILL-2024-001",
+  "billDate": "2024-01-15T10:30:00",
+  "cashierId": 2,
+  "cashierName": "Cashier User",
+  "customerName": "John Doe",
+  "customerPhone": "9876543210",
+  "subtotal": 450.00,
+  "totalGst": 81.00,
+  "totalAmount": 531.00,
+  "paymentStatus": "PAID",
+  "cancelled": false,
+  "items": [
+    {
+      "id": 1,
+      "medicineId": 1,
+      "medicineName": "Paracetamol 500mg",
+      "batchNumber": "BATCH-001",
+      "quantity": 2,
+      "unitPrice": 150.00,
+      "gstPercentage": 18.00,
+      "gstAmount": 54.00,
+      "totalAmount": 354.00
+    }
+  ],
+  "payments": [
+    {
+      "id": 1,
+      "paymentReference": "CASH-001",
+      "mode": "CASH",
+      "amount": 531.00,
+      "status": "COMPLETED",
+      "paymentDate": "2024-01-15T10:30:00"
+    }
+  ],
+  "createdAt": "2024-01-15T10:30:00"
+}
+```
+
+**cURL Example:**
+```bash
+curl -X POST http://localhost:8080/api/cashier/bills \
+  -H "Authorization: Bearer <token>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerName": "John Doe",
+    "items": [{"medicineId": 1, "quantity": 2}],
+    "payments": [{"mode": "CASH", "amount": 500.00}]
+  }'
+```
+
+---
+
+#### GET `/cashier/bills/{id}`
+Get bill details by ID.
+
+**Response (200 OK):** Same as POST response structure
+
+---
+
+#### GET `/cashier/bills/number/{billNumber}`
+Get bill details by bill number.
+
+**Example:**
+```
+GET /api/cashier/bills/number/BILL-2024-001
+```
+
+---
+
+#### GET `/cashier/bills`
+Get all bills (purchase history).
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "billNumber": "BILL-2024-001",
+    "billDate": "2024-01-15T10:30:00",
+    "totalAmount": 531.00,
+    "paymentStatus": "PAID",
+    ...
+  }
+]
+```
+
+---
+
+#### POST `/cashier/bills/{id}/cancel`
+Cancel a bill.
+
+**Query Parameters:**
+- `reason` (required): Cancellation reason
+
+**Example:**
+```
+POST /api/cashier/bills/1/cancel?reason=Customer%20requested%20cancellation
+```
+
+**Response (200 OK):** Updated bill with `cancelled: true`
+
+---
+
+#### GET `/cashier/bills/{id}/pdf`
+Download bill as PDF.
+
+**Response:** PDF file (application/pdf)
+
+**cURL Example:**
+```bash
+curl -X GET http://localhost:8080/api/cashier/bills/1/pdf \
+  -H "Authorization: Bearer <token>" \
+  -o bill.pdf
+```
+
+---
+
+### Medicine Management Endpoints
+
+#### POST `/pharmacist/medicines`
+Create a new medicine.
+
+**Request Body:**
+```json
+{
+  "name": "Paracetamol 500mg",
+  "manufacturer": "ABC Pharmaceuticals",
+  "category": "Pain Relief",
+  "barcode": "8901234567890",
+  "hsnCode": "30049099",
+  "gstPercentage": 18.00,
+  "prescriptionRequired": false,
+  "initialStock": 100,
+  "purchasePrice": 50.00,
+  "sellingPrice": 75.00,
+  "batchNumber": "BATCH-001",
+  "expiryDate": "2025-12-31"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "id": 1,
+  "name": "Paracetamol 500mg",
+  "manufacturer": "ABC Pharmaceuticals",
+  "category": "Pain Relief",
+  "barcode": "8901234567890",
+  "hsnCode": "30049099",
+  "gstPercentage": 18.00,
+  "prescriptionRequired": false,
+  "status": "ACTIVE",
+  "totalStock": 100,
+  "availableStock": 100,
+  "lowStock": false,
+  "outOfStock": false,
+  "createdAt": "2024-01-15T10:00:00"
+}
+```
+
+---
+
+#### GET `/pharmacist/medicines`
+Get all medicines.
+
+**Response (200 OK):** Array of medicine objects
+
+---
+
+#### GET `/pharmacist/medicines/{id}`
+Get medicine by ID.
+
+**Response (200 OK):** Single medicine object
+
+---
+
+#### GET `/pharmacist/medicines/search?name={name}`
+Search medicines by name (partial match).
+
+**Example:**
+```
+GET /api/pharmacist/medicines/search?name=paracetamol
+```
+
+**Response (200 OK):** Array of matching medicines
+
+---
+
+#### GET `/pharmacist/medicines/barcode/{barcode}`
+Get medicine by barcode.
+
+**Example:**
+```
+GET /api/pharmacist/medicines/barcode/8901234567890
+```
+
+---
+
+#### PUT `/pharmacist/medicines/{id}`
+Update medicine details.
+
+**Request Body:** Same structure as POST (all fields optional)
+
+**Response (200 OK):** Updated medicine object
+
+---
+
+#### PATCH `/pharmacist/medicines/{id}/status?status={status}`
+Update medicine status.
+
+**Status Values:** `ACTIVE`, `DISCONTINUED`
+
+**Example:**
+```
+PATCH /api/pharmacist/medicines/1/status?status=DISCONTINUED
+```
+
+---
+
+### Batch Management Endpoints
+
+#### POST `/pharmacist/batches`
+Create a new batch for a medicine.
+
+**Request Body:**
+```json
+{
+  "medicineId": 1,
+  "batchNumber": "BATCH-2024-001",
+  "expiryDate": "2025-12-31",
+  "purchasePrice": 50.00,
+  "sellingPrice": 75.00,
+  "quantityAvailable": 100,
+  "barcodes": ["BC001", "BC002", "BC003"]
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "id": 1,
+  "medicineId": 1,
+  "medicineName": "Paracetamol 500mg",
+  "batchNumber": "BATCH-2024-001",
+  "expiryDate": "2025-12-31",
+  "purchasePrice": 50.00,
+  "sellingPrice": 75.00,
+  "quantityAvailable": 100,
+  "isExpired": false,
+  "createdAt": "2024-01-15T10:00:00"
+}
+```
+
+---
+
+#### GET `/pharmacist/batches/medicine/{medicineId}`
+Get all batches for a specific medicine.
+
+**Response (200 OK):** Array of batch objects
+
+---
+
+#### GET `/pharmacist/batches/expired`
+Get all expired batches.
+
+**Response (200 OK):** Array of expired batch objects
+
+---
+
+#### GET `/pharmacist/batches/low-stock?threshold={threshold}`
+Get batches with low stock.
+
+**Query Parameters:**
+- `threshold` (optional, default: 10): Minimum stock threshold
+
+**Example:**
+```
+GET /api/pharmacist/batches/low-stock?threshold=20
+```
+
+---
+
+#### PUT `/pharmacist/batches/{id}`
+Update batch details.
+
+**Request Body:** Same structure as POST (all fields optional)
+
+---
+
+#### PATCH `/pharmacist/batches/{id}/stock`
+Update stock quantity.
+
+**Request Body:**
+```json
+{
+  "quantityAvailable": 50
+}
+```
+
+---
+
+### Returns Endpoints
+
+#### POST `/cashier/returns`
+Process a customer return.
+
+**Request Body:**
+```json
+{
+  "billId": 1,
+  "reason": "Product damaged",
+  "items": [
+    {
+      "billItemId": 1,
+      "quantity": 1
+    }
+  ]
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "id": 1,
+  "returnNumber": "RET-2024-001",
+  "originalBillId": 1,
+  "originalBillNumber": "BILL-2024-001",
+  "processedById": 3,
+  "processedByName": "Customer Support",
+  "returnDate": "2024-01-16T14:00:00",
+  "refundAmount": 177.00,
+  "reason": "Product damaged",
+  "returnType": "PARTIAL",
+  "items": [
+    {
+      "id": 1,
+      "medicineId": 1,
+      "medicineName": "Paracetamol 500mg",
+      "batchNumber": "BATCH-001",
+      "quantity": 1,
+      "refundAmount": 177.00
+    }
+  ],
+  "createdAt": "2024-01-16T14:00:00"
+}
+```
+
+---
+
+### Reports Endpoints
+
+#### GET `/admin/reports/sales`
+Get sales report for a date range.
+
+**Query Parameters:**
+- `startDate` (required): Start date (ISO format: `YYYY-MM-DD`)
+- `endDate` (required): End date (ISO format: `YYYY-MM-DD`)
+
+**Example:**
+```
+GET /api/admin/reports/sales?startDate=2024-01-01&endDate=2024-01-31
+```
+
+**Response (200 OK):**
+```json
+{
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31",
+  "totalSales": 50000.00,
+  "totalBills": 150,
+  "averageBillAmount": 333.33,
+  "items": [
+    {
+      "date": "2024-01-15",
+      "totalSales": 5000.00,
+      "billCount": 20
+    }
+  ]
+}
+```
+
+---
+
+#### GET `/admin/reports/gst`
+Get GST report for a date range.
+
+**Query Parameters:**
+- `startDate` (required): Start date
+- `endDate` (required): End date
+
+**Response (200 OK):**
+```json
+{
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31",
+  "totalGst": 9000.00,
+  "gstByRate": [
+    {
+      "gstRate": 18.00,
+      "totalGst": 9000.00,
+      "totalSales": 50000.00
+    }
+  ]
+}
+```
+
+---
+
+#### GET `/admin/reports/cashier/{cashierId}`
+Get cashier performance report.
+
+**Query Parameters:**
+- `startDate` (required): Start date
+- `endDate` (required): End date
+
+**Response (200 OK):**
+```json
+{
+  "cashierId": 2,
+  "cashierName": "Cashier User",
+  "startDate": "2024-01-01",
+  "endDate": "2024-01-31",
+  "totalBills": 50,
+  "totalSales": 25000.00,
+  "averageBillAmount": 500.00
+}
+```
+
+---
+
+#### GET `/admin/reports/stock`
+Get stock report.
+
+**Response (200 OK):**
+```json
+{
+  "totalMedicines": 100,
+  "totalBatches": 250,
+  "expiredBatches": [
+    {
+      "id": 1,
+      "medicineName": "Medicine A",
+      "batchNumber": "BATCH-001",
+      "expiryDate": "2023-12-31",
+      "quantityAvailable": 10
+    }
+  ],
+  "lowStockBatches": [
+    {
+      "id": 2,
+      "medicineName": "Medicine B",
+      "batchNumber": "BATCH-002",
+      "quantityAvailable": 5
+    }
+  ]
+}
+```
+
+---
+
+### User Management Endpoints
+
+#### GET `/admin/users`
+Get all users.
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "username": "admin",
+    "email": "admin@medicalstore.com",
+    "fullName": "Administrator",
+    "role": "ADMIN",
+    "active": true,
+    "createdAt": "2024-01-01T00:00:00"
+  }
+]
+```
+
+---
+
+#### GET `/admin/users/{id}`
+Get user by ID.
+
+**Response (200 OK):** Single user object
+
+---
+
+#### PUT `/admin/users/{id}/password`
+Change user password.
+
+**Request Body:**
+```json
+{
+  "newPassword": "newSecurePassword123"
+}
+```
+
+**Response (200 OK):** Updated user object
+
+---
+
+#### PUT `/admin/users/{id}/status`
+Update user status (activate/deactivate).
+
+**Query Parameters:**
+- `active` (required): `true` or `false`
+
+**Example:**
+```
+PUT /api/admin/users/2/status?active=false
+```
+
+**Response (200 OK):** Updated user object
+
+---
+
+### Audit Logs Endpoints
+
+#### GET `/admin/audit-logs`
+Get all audit logs.
+
+**Response (200 OK):**
+```json
+[
+  {
+    "id": 1,
+    "userId": 2,
+    "userName": "cashier",
+    "action": "CREATE",
+    "entityType": "Bill",
+    "entityId": "1",
+    "description": "Created new bill",
+    "oldValue": null,
+    "newValue": "{\"billNumber\":\"BILL-2024-001\"}",
+    "timestamp": "2024-01-15T10:30:00",
+    "ipAddress": "192.168.1.100"
+  }
+]
+```
+
+---
+
+#### GET `/admin/audit-logs/user/{userId}`
+Get audit logs for a specific user.
+
+**Response (200 OK):** Array of audit log objects
+
+---
+
+## 📝 Common Request/Response Formats
+
+### Payment Modes
+- `CASH`
+- `CARD`
+- `UPI`
+- `NET_BANKING`
+- `WALLET`
+
+### Payment Status
+- `PENDING`
+- `COMPLETED`
+- `FAILED`
+- `REFUNDED`
+
+### Bill Payment Status
+- `PENDING`
+- `PAID`
+- `PARTIALLY_PAID`
+- `CANCELLED`
+
+### Medicine Status
+- `ACTIVE`
+- `DISCONTINUED`
+
+### User Roles
+- `ADMIN`
+- `CASHIER`
+- `STOCK_MONITOR`
+- `STOCK_KEEPER`
+- `CUSTOMER_SUPPORT`
+- `ANALYST`
+- `MANAGER`
+
+---
+
+## ⚠️ Error Responses
+
+All error responses follow this format:
+
+```json
+{
+  "timestamp": "2024-01-15T10:30:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/cashier/bills"
+}
+```
+
+### Common HTTP Status Codes
+
+| Status Code | Description |
+|------------|-------------|
+| `200 OK` | Request successful |
+| `201 Created` | Resource created successfully |
+| `400 Bad Request` | Invalid request data |
+| `401 Unauthorized` | Missing or invalid JWT token |
+| `403 Forbidden` | Insufficient permissions |
+| `404 Not Found` | Resource not found |
+| `409 Conflict` | Optimistic locking conflict |
+| `500 Internal Server Error` | Server error |
+
+---
+
+## 🔐 Authentication Flow
+
+1. **Login** → POST `/auth/login` with credentials
+2. **Receive Token** → Extract `token` from response
+3. **Include in Requests** → Add header: `Authorization: Bearer <token>`
+4. **Token Expiration** → Token expires after 24 hours, re-login required
+
+---
+
+## 📚 Additional Resources
+
+- **Interactive API Documentation**: Visit `http://localhost:8080/swagger-ui.html` for interactive API testing
+- **OpenAPI Specification**: Download from `http://localhost:8080/v3/api-docs`
+- **Postman Collection**: Import OpenAPI spec into Postman for API testing
 
 ---
 
