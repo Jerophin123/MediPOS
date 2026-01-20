@@ -80,7 +80,7 @@ A production-grade Point of Sale (POS) system designed specifically for medical 
 
 ### Architecture Overview
 
-![Medical Store POS System Architecture](diagrams/System-Archietecture.png)
+![Medical Store POS System Architecture](Diagrams/System-Archietecture.png)
 
 > **Note**: If the image doesn't display, ensure the file exists at `diagrams/System-Archietecture.png`. The filename has a typo ("Archietecture" instead of "Architecture").
 
