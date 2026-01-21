@@ -8,9 +8,19 @@ import { environment } from '../../../environments/environment';
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = environment.apiUrl;
+  private apiUrl: string;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    // Dynamically determine API URL based on current hostname to support network access
+    const hostname = typeof window !== 'undefined' ? window.location.hostname : 'localhost';
+    // If accessing via localhost or 127.0.0.1, use localhost
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      this.apiUrl = 'http://localhost:8080/api';
+    } else {
+      // Otherwise, use the current hostname (supports network IPs like 0.0.0.0, 192.168.x.x, etc.)
+      this.apiUrl = `http://${hostname}:8080/api`;
+    }
+  }
 
   private getHeaders(): HttpHeaders {
     return new HttpHeaders({
